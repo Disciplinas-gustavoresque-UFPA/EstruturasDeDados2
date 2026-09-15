@@ -9,13 +9,15 @@ pub mod utils;
 
 pub fn vec_to_string<T: Display>(elements: &Vec<T>) -> String {
     let mut msg = String::new();
-    for (idx, elem) in elements.iter().enumerate() {
-        msg.push_str(&elem.to_string());
-
-        if idx != elements.len() - 1 {
+    let len = elements.len();
+    if len > 0 {
+        for idx in 0..len - 1 {
+            msg.push_str(&elements[idx].to_string());
             msg.push(' ');
         }
+        msg.push_str(&elements[len - 1].to_string());
     }
+    
     return msg;
 }
 
