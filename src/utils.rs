@@ -21,3 +21,5 @@ pub fn min<T: PartialOrd + Copy>(elements: &Vec<T>) -> Option<T> {
     }
     return min_element.copied();
 }
+
+// pub fn find<T: PartialEq + Copy>(elements: & Vec<T>)

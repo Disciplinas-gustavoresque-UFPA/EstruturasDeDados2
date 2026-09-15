@@ -34,9 +34,8 @@ fn main() {
     outputs.clear();
 
     for input in &inputs {
-        let max_integer: Option<i32> = min(&input);
+        let max_integer: Option<i32> = min(&input);        
         outputs.push(max_integer);
-    
     }
 
     // printing min results
