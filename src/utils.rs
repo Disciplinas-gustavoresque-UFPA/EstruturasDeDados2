@@ -1,18 +1,18 @@
-pub fn max(elements: &Vec<i32>) -> Option<i32> {
+pub fn max<T: PartialOrd + Copy>(elements: &Vec<T>) -> Option<T> {
 
-    let mut max_element: Option<&i32> = elements.first();
+    let mut max_element: Option<&T> = elements.first();
 
-    for num in elements.iter().skip(1) {
-        if max_element < Some(num) {
-            max_element = Some(num);
+    for elem in elements.iter().skip(1) {
+        if max_element < Some(elem) {
+            max_element = Some(elem);
         }
     }
     return max_element.copied();
 }
 
-pub fn min(elements: &Vec<i32>) -> Option<i32> {
+pub fn min<T: PartialOrd + Copy>(elements: &Vec<T>) -> Option<T> {
 
-    let mut min_element: Option<&i32> = elements.first();
+    let mut min_element: Option<&T> = elements.first();
 
     for num in elements.iter().skip(1) {
         if min_element > Some(num) {
