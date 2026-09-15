@@ -1,4 +1,4 @@
-pub fn max<T: PartialOrd + Copy>(elements: &Vec<T>) -> Option<T> {
+pub fn max<T: Ord + Copy>(elements: &Vec<T>) -> Option<T> {
 
     let mut max_element: Option<&T> = elements.first();
 
@@ -10,7 +10,7 @@ pub fn max<T: PartialOrd + Copy>(elements: &Vec<T>) -> Option<T> {
     return max_element.copied();
 }
 
-pub fn min<T: PartialOrd + Copy>(elements: &Vec<T>) -> Option<T> {
+pub fn min<T: Ord + Copy>(elements: &Vec<T>) -> Option<T> {
 
     let mut min_element: Option<&T> = elements.first();
 
@@ -22,7 +22,7 @@ pub fn min<T: PartialOrd + Copy>(elements: &Vec<T>) -> Option<T> {
     return min_element.copied();
 }
 
-pub fn find<T: PartialEq + Copy>(elements: &Vec<T>, target: &T) -> Option<usize> {
+pub fn find<T: Eq + Copy>(elements: &Vec<T>, target: &T) -> Option<usize> {
     for (idx, num) in elements.iter().enumerate() {
         if target == num {
             return Some(idx);
@@ -30,3 +30,17 @@ pub fn find<T: PartialEq + Copy>(elements: &Vec<T>, target: &T) -> Option<usize>
     }
     return None;
 }
+
+// pub fn insertion_sort<T: PartialOrd + Copy>(elements: &mut [T]) {
+//     for i in 1..elements.len() {
+//         let mut j = i;
+//         let cur = elements[i];
+
+//         while j > 0 && cur < elements[j - 1] {
+//             elements[j] = elements[j - 1];
+//             j -= 1;
+//         }
+
+//         elements[j] = cur;
+//     }
+// }
