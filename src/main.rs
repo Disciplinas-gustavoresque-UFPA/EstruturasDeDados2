@@ -1,12 +1,13 @@
 use std::fmt::Display;
 
-use crate::utils::bubble_sort;
-use crate::utils::insertion_sort;
-use crate::utils::max;
-use crate::utils::min;
-use crate::utils::find;
+use crate::sorting::bubble_sort;
+use crate::sorting::insertion_sort;
+use crate::searching::max;
+use crate::searching::min;
+use crate::searching::find;
 
-pub mod utils;
+pub mod searching;
+pub mod sorting;
 
 pub fn vec_to_string<T: Display>(elements: &Vec<T>) -> String {
     let mut msg = String::new();
@@ -83,7 +84,6 @@ fn main() {
     }
 
     // printing min results
-    println!("\nMIN:");
     print_outputs("\nMIN:", &outputs);
     outputs.clear();
 
