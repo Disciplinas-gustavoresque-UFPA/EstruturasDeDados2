@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-// use crate::utils::insertion_sort;
+use crate::utils::insertion_sort;
 use crate::utils::max;
 use crate::utils::min;
 use crate::utils::find;
@@ -96,20 +96,27 @@ fn main() {
     }
     outputs.clear();
 
-    // let inputs_to_order: Vec<Vec<i32>> = vec![
-    //     vec![1, 2, 3],
-    //     vec![-1, -2, -3],
-    //     vec![4, 1, 2, 3],
-    //     vec![-4, 1, 2, 3],
-    //     vec![5, 2, 3],
-    //     vec![5, -2, 3],
-    //     vec![5, 4, 3, 2, 1],
-    //     vec![-5, -4, -3, -2, -1],
-    // ];
+    let inputs_to_order: Vec<Vec<i32>> = vec![
+        vec![],                         // empty
+        vec![0],                        // one element
+        vec![1, 2, 3],                  // already ordered
+        vec![4, 1, 2, 3],
+        vec![4, 1, 2, 3, 5],
+        vec![1, 2, 3, 0],
+        vec![0, 1, 2, 3, 0],
+        vec![-1, -1, -1, -1],           // repeated elements
+        vec![5, 4, 3, 2, 1],            // reverse order
+        vec![1, 2, -1, -2, -3],         
+    ];
 
-    // for mut input in inputs_to_order {
-    //     insertion_sort(&mut input);
-    // }
+    for mut input in &inputs_to_order {
+        let output = insertion_sort(&mut input);
+        outputs.push(format!("[{}]: {}", vec_to_string(input), vec_to_string(&output)));
+    }
 
+    for output in &outputs {
+        println!("{output}");
+    }
+    outputs.clear();
 
 }
