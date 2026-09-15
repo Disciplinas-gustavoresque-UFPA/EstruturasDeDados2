@@ -49,3 +49,17 @@ pub fn insertion_sort<T: Ord + Copy>(elements: &Vec<T>) -> Vec<T> {
 
     return elements_copy;
 }
+
+pub fn bubble_sort<T: Ord + Copy>(elements: &Vec<T>) -> Vec<T> {
+    let mut elements_copy = elements.clone();
+    let n = elements_copy.len();
+
+    for i in 1..n {
+        for j in 0..n - i {
+            if elements_copy[j] > elements_copy[j + 1] {
+                elements_copy.swap(j, j + 1);
+            }
+        }
+    }
+    return elements_copy;
+}
