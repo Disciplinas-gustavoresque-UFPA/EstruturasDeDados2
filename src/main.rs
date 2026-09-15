@@ -1,5 +1,6 @@
-use crate::utils::min;
 use crate::utils::max;
+use crate::utils::min;
+use crate::utils::find;
 
 pub mod utils;
 
@@ -49,4 +50,33 @@ fn main() {
         println!("{output}");
     }
     outputs.clear();
+
+    let find_inputs: Vec<i32> = vec![
+        1,
+        -2,
+        4,
+        3,
+        i32::MAX,
+        -2,
+        1,
+        0,
+        0,
+        i32::MIN,
+        i32::MIN 
+    ];
+
+    for (target, input) in find_inputs.iter().zip(inputs) {
+        let found_integer: Option<usize> = find(&input, &target);
+        match found_integer {
+            Some(x) => outputs.push(format!("{x}")),
+            None => outputs.push(format!("Target [{target}] was not found."))
+        }
+    }
+
+    // printing find results
+    for output in &outputs {
+        println!("{output}");
+    }
+    outputs.clear();
+
 }

@@ -22,4 +22,11 @@ pub fn min<T: PartialOrd + Copy>(elements: &Vec<T>) -> Option<T> {
     return min_element.copied();
 }
 
-// pub fn find<T: PartialEq + Copy>(elements: & Vec<T>)
+pub fn find<T: PartialEq + Copy>(elements: &Vec<T>, target: &T) -> Option<usize> {
+    for (idx, num) in elements.iter().enumerate() {
+        if target == num {
+            return Some(idx);
+        }
+    }
+    return None;
+}
