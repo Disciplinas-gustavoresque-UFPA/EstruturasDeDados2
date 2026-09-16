@@ -1,31 +1,28 @@
-fn merge<T: Ord + Copy>(elements: &mut [T], mid: usize) {
-    let left_half = elements[..mid].to_vec();
-    let right_half = elements[mid..].to_vec();
+pub fn merge_sort<T: Ord + Copy>(elements: &mut [T]) {
     
-    let mut l = 0;
-    let mut r = 0;
+    if elements.len() > 1 {
 
-    for elem in elements {
+        let mid = elements.len() / 2;        
+        merge_sort(&mut elements[..mid]);
+        merge_sort(&mut elements[mid..]);
 
-        if r == right_half.len() || (l < left_half.len() && left_half[l] < right_half[r]) {
-            *elem = left_half[l];
-            l += 1;
+        let left_half = elements[..mid].to_vec();
+        let right_half = elements[mid..].to_vec();
+        
+        let mut l = 0;
+        let mut r = 0;
+
+        for elem in elements {
+
+            if r == right_half.len() || (l < left_half.len() && left_half[l] < right_half[r]) {
+                *elem = left_half[l];
+                l += 1;
+            }
+            else {
+                *elem = right_half[r];
+                r += 1;
+            }
         }
-        else {
-            *elem = right_half[r];
-            r += 1;
-        }
-    }
-}
-
-pub fn merge_sort<T: Ord + Copy>(arr: &mut [T]) {
-    
-    if arr.len() > 1 {
-
-        let mid = arr.len() / 2;        
-        merge_sort(&mut arr[..mid]);
-        merge_sort(&mut arr[mid..]);
-        merge(arr, mid);
     }
 }
 
