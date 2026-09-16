@@ -1,4 +1,4 @@
-pub fn insertion_sort<T: Ord + Copy>(elements: &mut Vec<T>) {
+pub fn insertion_sort<T: Ord + Copy>(elements: &mut [T]) {
     let len = elements.len();
     for i in 1..len {
         let mut j = i;
