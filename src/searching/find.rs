@@ -1,4 +1,4 @@
-pub fn find<T: Eq + Copy>(elements: &[T], target: &T) -> Option<usize> {
+pub fn find<T: Eq>(elements: &[T], target: &T) -> Option<usize> {
     for (idx, num) in elements.iter().enumerate() {
         if target == num {
             return Some(idx);
