@@ -1,8 +1,10 @@
 pub fn merge_sort<T: Ord + Copy>(elements: &mut [T]) {
     
-    if elements.len() > 1 {
+    if elements.len() <=1 {   
+        return;
+    }
 
-        let mid = elements.len() / 2;        
+    let mid = elements.len() / 2;        
         merge_sort(&mut elements[..mid]);
         merge_sort(&mut elements[mid..]);
 
@@ -23,7 +25,6 @@ pub fn merge_sort<T: Ord + Copy>(elements: &mut [T]) {
                 r += 1;
             }
         }
-    }
 }
 
 #[cfg(test)]
