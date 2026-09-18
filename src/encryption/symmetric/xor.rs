@@ -1,4 +1,4 @@
-pub fn xor_encrypt(input: &[u8], key: &[u8]) -> Vec<u8> {
+pub fn xor_cipher(input: &[u8], key: &[u8]) -> Vec<u8> {
     return input
         .iter()
         .enumerate()
@@ -8,14 +8,14 @@ pub fn xor_encrypt(input: &[u8], key: &[u8]) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::xor_encrypt;
+    use super::xor_cipher;
 
     #[test]
     fn test_xor_encrypt_basic() {
         let input = b"hello";
         let key = b"key";
 
-        let result = xor_encrypt(input, key);
+        let result = xor_cipher(input, key);
 
         assert_eq!(
             result,
@@ -34,7 +34,7 @@ mod tests {
         let input = b"abcdef";
         let key = b"ab";
 
-        let result = xor_encrypt(input, key);
+        let result = xor_cipher(input, key);
 
         assert_eq!(
             result,
@@ -54,7 +54,7 @@ mod tests {
         let input = b"";
         let key = b"key";
 
-        let result = xor_encrypt(input, key);
+        let result = xor_cipher(input, key);
 
         assert!(result.is_empty());
     }
@@ -64,7 +64,7 @@ mod tests {
         let input = &[0b1010_1010];
         let key = &[0b1111_0000];
 
-        let result = xor_encrypt(input, key);
+        let result = xor_cipher(input, key);
 
         assert_eq!(result, vec![0b0101_1010]);
     }
@@ -74,8 +74,8 @@ mod tests {
         let input = b"Hello, world!";
         let key = b"secret";
 
-        let encrypted = xor_encrypt(input, key);
-        let decrypted = xor_encrypt(&encrypted, key);
+        let encrypted = xor_cipher(input, key);
+        let decrypted = xor_cipher(&encrypted, key);
 
         assert_eq!(decrypted, input);
     }
@@ -85,7 +85,7 @@ mod tests {
         let input = b"abc";
         let key = b"longerkey";
 
-        let result = xor_encrypt(input, key);
+        let result = xor_cipher(input, key);
 
         assert_eq!(result, vec![b'a' ^ b'l', b'b' ^ b'o', b'c' ^ b'n',]);
     }
@@ -96,6 +96,6 @@ mod tests {
         let input = b"hello";
         let key = b"";
 
-        xor_encrypt(input, key);
+        xor_cipher(input, key);
     }
 }

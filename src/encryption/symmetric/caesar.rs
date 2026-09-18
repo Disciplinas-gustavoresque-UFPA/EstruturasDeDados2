@@ -1,14 +1,15 @@
-pub fn caesar_cipher(text: &str, shift: i32) -> String {
-    return text.chars().map(|c| shift_char(c, shift)).collect();
-}
+use crate::encryption::symmetric::shift_char;
 
-fn shift_char(c: char, shift: i32) -> char {
-    if !c.is_ascii_alphabetic() {
-        return c;
-    }
-    let base = if c.is_ascii_uppercase() { b'A' } else { b'a' };
-    let offset = ((c as i32 - base as i32 + shift).rem_euclid(26)) as u8;
-    return (base + offset) as char;
+pub fn caesar_cipher(text: &str, shift: i32) -> String {
+    return text
+        .chars()
+        .map(|c| {
+            if !c.is_ascii_alphabetic() {
+                return c;
+            }
+            shift_char(c, shift)
+        })
+        .collect();
 }
 
 #[cfg(test)]
