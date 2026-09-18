@@ -1,9 +1,9 @@
 pub fn xor_encrypt(input: &[u8], key: &[u8]) -> Vec<u8> {
-    input
+    return input
         .iter()
         .enumerate()
         .map(|(i, &byte)| byte ^ key[i % key.len()])
-        .collect()
+        .collect();
 }
 
 #[cfg(test)]
