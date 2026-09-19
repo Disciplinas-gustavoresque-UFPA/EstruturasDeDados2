@@ -1,0 +1,9 @@
+[package]
+name = "estruturas_de_dados_2"
+version = "0.1.0"
+edition = "2021"
+authors = ["Charles C. A. Lima <limacca1978>"]
+description = "Biblioteca de algoritmos e estruturas de dados em Rust"
+
+[dependencies]
+# Dependências futuras (como rayon para paralelismo ou pyo3 para integração Python) entrarão aqui.
