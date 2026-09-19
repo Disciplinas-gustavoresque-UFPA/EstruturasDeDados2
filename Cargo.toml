@@ -6,4 +6,12 @@ authors = ["Charles C. A. Lima <limacca1978>"]
 description = "Biblioteca de algoritmos e estruturas de dados em Rust"
 
 [dependencies]
-# Dependências futuras (como rayon para paralelismo ou pyo3 para integração Python) entrarão aqui.
+# Dependências do código de produção
+
+[dev-dependencies]
+criterion = "0.5"
+rand = "0.8"
+
+[[bench]]
+name = "kdtree_benchmark"
+harness = false
