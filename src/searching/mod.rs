@@ -5,3 +5,4 @@ mod find;
 pub use max::max;
 pub use min::min;
 pub use find::find;
+pub mod kd_tree;

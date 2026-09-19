@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::Rng;
-use estruturas_de_dados_2::kd_tree::{KdTree, Point};
+use estruturas_de_dados_2::searching::kd_tree::{KdTree, Point};
 
 fn generate_random_point_3d() -> Point {
     let mut rng = rand::thread_rng();
