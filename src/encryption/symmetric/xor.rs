@@ -1,4 +1,8 @@
 pub fn xor_encrypt(input: &[u8], key: &[u8]) -> Vec<u8> {
+    if key.len() == 0 {
+        panic!("`key` must not have zero length.");
+    }
+
     input
         .iter()
         .enumerate()
@@ -88,6 +92,16 @@ mod tests {
         let result = xor_encrypt(input, key);
 
         assert_eq!(result, vec![b'a' ^ b'l', b'b' ^ b'o', b'c' ^ b'n',]);
+    }
+
+    #[test]
+    fn test_xor_encrypt_zero_key_preserves_input() {
+        let input = b"hello";
+        let key = &[0u8];
+
+        let encrypted = xor_encrypt(input, key);
+
+        assert_eq!(encrypted, input);
     }
 
     #[test]
