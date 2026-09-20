@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "estruturas-de-dados"
+name = "EstruturasDeDados2"
 version = "0.1.0"
