@@ -1,3 +1,5 @@
+const ALPHABET_SIZE: i32 = 26;
+
 pub fn caesar_cipher(text: &str, shift: i32) -> String {
     return text.chars().map(|c| shift_char(c, shift)).collect();
 }
@@ -7,8 +9,9 @@ fn shift_char(c: char, shift: i32) -> char {
         return c;
     }
     let base = if c.is_ascii_uppercase() { b'A' } else { b'a' };
-    let offset = ((c as i32 - base as i32 + shift).rem_euclid(26)) as u8;
-    return (base + offset) as char;
+    let offset = (c as i32 - base as i32 + shift).rem_euclid(ALPHABET_SIZE) as u8;
+
+    (base + offset) as char
 }
 
 #[cfg(test)]
@@ -43,5 +46,15 @@ mod tests {
     #[test]
     fn test_non_alpha_unchanged() {
         assert_eq!(caesar_cipher("123!@#", 5), "123!@#");
+    }
+
+    #[test]
+    fn test_big_key() {
+        assert_eq!(caesar_cipher("bcd", 27), "cde");
+    }
+
+    #[test]
+    fn test_something() {
+        assert_eq!(caesar_cipher("bcd", 26), "bcd");
     }
 }
