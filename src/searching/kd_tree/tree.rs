@@ -2,7 +2,6 @@
 #[derive(Debug, Clone, PartialEq)]
 pub struct Point {
     pub coordinates: Vec<f64>,
-    pub physics_loss: Option<f64>, 
 }
 
 impl Point {
@@ -154,11 +153,11 @@ mod tests {
     fn test_kdtree_insertion() {
         let mut tree = KdTree::new(2);
 
-        tree.insert(Point { coordinates: vec![3.0, 6.0], physics_loss: None });
-        tree.insert(Point { coordinates: vec![17.0, 15.0], physics_loss: None });
-        tree.insert(Point { coordinates: vec![13.0, 15.0], physics_loss: None });
-        tree.insert(Point { coordinates: vec![6.0, 12.0], physics_loss: None });
-        tree.insert(Point { coordinates: vec![9.0, 1.0], physics_loss: None });
+        tree.insert(Point { coordinates: vec![3.0, 6.0] });
+        tree.insert(Point { coordinates: vec![17.0, 15.0] });
+        tree.insert(Point { coordinates: vec![13.0, 15.0] });
+        tree.insert(Point { coordinates: vec![6.0, 12.0] });
+        tree.insert(Point { coordinates: vec![9.0, 1.0] });
 
         assert_eq!(tree.size(), 5);
 
@@ -181,18 +180,18 @@ mod tests {
         ];
 
         for coords in points {
-            tree.insert(Point { coordinates: coords, physics_loss: None });
+            tree.insert(Point { coordinates: coords });
         }
 
-        let target_exact = Point { coordinates: vec![9.0, 6.0], physics_loss: None };
+        let target_exact = Point { coordinates: vec![9.0, 6.0] };
         let nearest_exact = tree.nearest(&target_exact).unwrap();
         assert_eq!(nearest_exact.coordinates, vec![9.0, 6.0]);
 
-        let target_close = Point { coordinates: vec![9.0, 2.0], physics_loss: None };
+        let target_close = Point { coordinates: vec![9.0, 2.0] };
         let nearest_close = tree.nearest(&target_close).unwrap();
         assert_eq!(nearest_close.coordinates, vec![8.0, 1.0]);
 
-        let target_boundary = Point { coordinates: vec![3.0, 4.5], physics_loss: None };
+        let target_boundary = Point { coordinates: vec![3.0, 4.5] };
         let nearest_boundary = tree.nearest(&target_boundary).unwrap();
         assert_eq!(nearest_boundary.coordinates, vec![2.0, 3.0]);
     }
