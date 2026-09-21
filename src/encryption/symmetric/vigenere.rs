@@ -9,13 +9,14 @@ pub fn vigenere_cipher(text: &str, key: &str, encrypt: bool) -> String {
         .collect();
 
     if key_bytes.is_empty() {
-        return text.to_string();
+        panic!(
+            "The key must not be empty. Non-ASCII characters are not supported and will be ignored."
+        );
     }
 
     let mut index = 0;
 
-    return text
-        .chars()
+    text.chars()
         .map(|c| {
             if !c.is_ascii_alphabetic() {
                 return c;
@@ -24,7 +25,7 @@ pub fn vigenere_cipher(text: &str, key: &str, encrypt: bool) -> String {
             index += 1;
             return shift_char(c, if encrypt { shift } else { -shift });
         })
-        .collect();
+        .collect()
 }
 
 #[cfg(test)]
