@@ -14,8 +14,7 @@ pub fn vigenere_cipher(text: &str, key: &str, encrypt: bool) -> String {
 
     let mut index = 0;
 
-    return text
-        .chars()
+    text.chars()
         .map(|c| {
             if !c.is_ascii_alphabetic() {
                 return c;
@@ -24,7 +23,7 @@ pub fn vigenere_cipher(text: &str, key: &str, encrypt: bool) -> String {
             index += 1;
             return shift_char(c, if encrypt { shift } else { -shift });
         })
-        .collect();
+        .collect()
 }
 
 #[cfg(test)]
@@ -88,8 +87,6 @@ mod tests {
 
         let result = vigenere_cipher(input, key, true);
 
-        // Expected behavior depends on your implementation.
-        // This assumes spaces and punctuation are left unchanged.
         assert_eq!(result, "RIJVS UYVJN!");
     }
 
