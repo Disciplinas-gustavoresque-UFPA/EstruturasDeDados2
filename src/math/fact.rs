@@ -1,7 +1,8 @@
 pub fn fact(n: i64) -> i64 {
-    if n < 0 {
-        panic!("fact: parameter 'n' must be equal or greater than zero.");
-    }
+    assert!(
+        n >= 0,
+        "fact: parameter 'n' must be equal or greater than zero."
+    );
     let mut result: i64 = 1;
     for i in 1..n + 1 {
         result *= i;
@@ -10,9 +11,11 @@ pub fn fact(n: i64) -> i64 {
 }
 
 pub fn fact_recursive(n: i64) -> i64 {
-    if n < 0 {
-        panic!("fact: parameter 'n' must be equal or greater than zero.");
-    } else if n == 0 || n == 1 {
+    assert!(
+        n >= 0,
+        "fact: parameter 'n' must be equal or greater than zero."
+    );
+    if n == 0 || n == 1 {
         return 1;
     }
     return n * fact_recursive(n - 1);

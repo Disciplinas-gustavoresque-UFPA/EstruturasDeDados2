@@ -1,8 +1,6 @@
 pub fn collatz(n: i64, sequence: &mut Vec<i64>) {
+    assert!(n >= 1, "fact: parameter 'n' must be greater than zero.");
     let mut number = n;
-    if number < 1 {
-        panic!("fact: parameter 'n' must be greater than zero.");
-    }
     while number > 1 {
         sequence.push(number);
         if number % 2 == 0 {
@@ -15,9 +13,7 @@ pub fn collatz(n: i64, sequence: &mut Vec<i64>) {
 }
 
 pub fn collatz_recursive(n: i64, sequence: &mut Vec<i64>) {
-    if n < 1 {
-        panic!("fact: parameter 'n' must be greater than zero.");
-    }
+    assert!(n >= 1, "fact: parameter 'n' must be greater than zero.");
     if n == 1 {
         sequence.push(1);
     } else {
@@ -109,7 +105,6 @@ mod tests {
     #[test]
     fn test_three_to_six() {
         let mut sequence: Vec<i64> = vec![];
-
         collatz(3, &mut sequence);
         assert_eq!(sequence, vec![3, 10, 5, 16, 8, 4, 2, 1]);
         sequence.clear();

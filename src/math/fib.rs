@@ -1,7 +1,9 @@
 pub fn fib(n: i64) -> i64 {
-    if n < 0 {
-        panic!("fib: parameter 'n' must be equal or greater than zero.");
-    } else if n == 0 || n == 1 {
+    assert!(
+        n >= 0,
+        "fact: parameter 'n' must be equal or greater than zero."
+    );
+    if n == 0 || n == 1 {
         return n;
     }
 
@@ -14,9 +16,11 @@ pub fn fib(n: i64) -> i64 {
 }
 
 pub fn fib_recursive(n: i64) -> i64 {
-    if n < 0 {
-        panic!("fib: parameter 'n' must be equal or greater than zero.");
-    } else if n <= 1 {
+    assert!(
+        n >= 0,
+        "fact: parameter 'n' must be equal or greater than zero."
+    );
+    if n <= 1 {
         return n;
     }
     return fib(n - 1) + fib(n - 2);

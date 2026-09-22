@@ -7,8 +7,7 @@ fn inner_hanoi<T>(n: usize, start: &mut Vec<T>, end: &mut Vec<T>, aux: &mut Vec<
     if n == 1 {
         let top = start.remove(0);
         end.insert(0, top);
-    }
-    else {
+    } else {
         inner_hanoi(n - 1, start, aux, end);
         let top = start.remove(0);
         end.insert(0, top);
@@ -19,14 +18,12 @@ fn inner_hanoi<T>(n: usize, start: &mut Vec<T>, end: &mut Vec<T>, aux: &mut Vec<
 #[cfg(test)]
 mod tests {
 
-    use super::hanoi; 
+    use super::hanoi;
 
     #[test]
     fn test_one_to_three_discs() {
         let mut start: Vec<i32> = (1..=1).step_by(1).collect();
         let mut end: Vec<i32> = vec![];
         hanoi(&mut start, &mut end);
-        
     }
 }
-
