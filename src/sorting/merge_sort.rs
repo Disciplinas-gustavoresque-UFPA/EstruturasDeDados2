@@ -1,30 +1,27 @@
 pub fn merge_sort<T: Ord + Copy>(elements: &mut [T]) {
-    
-    if elements.len() <=1 {   
+    if elements.len() <= 1 {
         return;
     }
 
-    let mid = elements.len() / 2;        
-        merge_sort(&mut elements[..mid]);
-        merge_sort(&mut elements[mid..]);
+    let mid = elements.len() / 2;
+    merge_sort(&mut elements[..mid]);
+    merge_sort(&mut elements[mid..]);
 
-        let left_half = elements[..mid].to_vec();
-        let right_half = elements[mid..].to_vec();
-        
-        let mut l = 0;
-        let mut r = 0;
+    let left_half = elements[..mid].to_vec();
+    let right_half = elements[mid..].to_vec();
 
-        for elem in elements {
+    let mut l = 0;
+    let mut r = 0;
 
-            if r == right_half.len() || (l < left_half.len() && left_half[l] < right_half[r]) {
-                *elem = left_half[l];
-                l += 1;
-            }
-            else {
-                *elem = right_half[r];
-                r += 1;
-            }
+    for elem in elements {
+        if r == right_half.len() || (l < left_half.len() && left_half[l] < right_half[r]) {
+            *elem = left_half[l];
+            l += 1;
+        } else {
+            *elem = right_half[r];
+            r += 1;
         }
+    }
 }
 
 #[cfg(test)]
