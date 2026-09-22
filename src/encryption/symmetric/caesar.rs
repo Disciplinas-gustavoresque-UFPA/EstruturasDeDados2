@@ -54,7 +54,7 @@ mod tests {
     }
 
     #[test]
-    fn test_something() {
+    fn test_shift_wraps_around_to_the_beginning() {
         assert_eq!(caesar_cipher("bcd", 26), "bcd");
     }
 }
