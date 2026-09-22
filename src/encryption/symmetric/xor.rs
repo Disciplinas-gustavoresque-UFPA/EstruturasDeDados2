@@ -1,5 +1,6 @@
 pub fn xor_encrypt(input: &[u8], key: &[u8]) -> Vec<u8> {
-    if key.len() == 0 {
+    if key.is_empty() {
+        // erro não recuperável (chave nunca deve ser vazia)
         panic!("`key` must not have zero length.");
     }
 
@@ -105,7 +106,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "`key` must not have zero length.")]
     fn test_xor_encrypt_empty_key() {
         let input = b"hello";
         let key = b"";
