@@ -10,11 +10,9 @@ pub fn fact(n: i64) -> i64 {
 }
 
 pub fn fact_recursive(n: i64) -> i64 {
-
     if n < 0 {
         panic!("fact: parameter 'n' must be equal or greater than zero.");
-    }
-    else if n == 0 || n == 1 {
+    } else if n == 0 || n == 1 {
         return 1;
     }
     return n * fact_recursive(n - 1);

@@ -5,10 +5,9 @@ pub fn collatz(n: i64, sequence: &mut Vec<i64>) {
     }
     while number > 1 {
         sequence.push(number);
-        if number % 2 == 0 { 
-            number = number / 2; 
-        } 
-        else {
+        if number % 2 == 0 {
+            number = number / 2;
+        } else {
             number = 3 * number + 1;
         }
     }
@@ -21,13 +20,11 @@ pub fn collatz_recursive(n: i64, sequence: &mut Vec<i64>) {
     }
     if n == 1 {
         sequence.push(1);
-    }
-    else {
+    } else {
         sequence.push(n);
         if n % 2 == 0 {
             collatz_recursive(n / 2, sequence);
-        }
-        else {
+        } else {
             collatz_recursive(3 * n + 1, sequence);
         }
     }
@@ -83,7 +80,6 @@ mod tests {
 
     #[test]
     fn test_three_to_six_recursive() {
-
         let mut sequence: Vec<i64> = vec![];
 
         collatz_recursive(3, &mut sequence);
@@ -112,7 +108,6 @@ mod tests {
 
     #[test]
     fn test_three_to_six() {
-
         let mut sequence: Vec<i64> = vec![];
 
         collatz(3, &mut sequence);
