@@ -1,3 +1,16 @@
+/*
+    The conjecture asks whether repeating two simple arithmetic operations will eventually transform every positive integer into 1.
+    It concerns sequences of integers in which each term is obtained from the previous term as follows:
+    if a term is even, the next term is one half of it. If a term is odd, the next term is 3 times the previous term plus 1.
+    The conjecture is that these sequences always reach 1, no matter which positive integer is chosen to start the sequence.
+    Source: https://en.wikipedia.org/wiki/Collatz_conjecture
+    e.g.:
+    - 1 = [1],
+    - 2 = [2, 1],
+    - 3 = [3, 10, 5, 16, 8, 4, 2, 1],
+    - 4 = [4, 2, 1],
+    - 5 = [5, 16, 8, 4, 2, 1]
+ */
 pub fn collatz(n: i64, sequence: &mut Vec<i64>) {
     assert!(n >= 1, "fact: parameter 'n' must be greater than zero.");
     let mut number = n;
@@ -12,6 +25,9 @@ pub fn collatz(n: i64, sequence: &mut Vec<i64>) {
     sequence.push(number);
 }
 
+/*
+    This is the same conjecture but in a recursive form.
+ */
 pub fn collatz_recursive(n: i64, sequence: &mut Vec<i64>) {
     assert!(n >= 1, "fact: parameter 'n' must be greater than zero.");
     if n == 1 {
