@@ -1,4 +1,4 @@
-use std::{boxed::Box, cmp::Ordering, mem::replace};
+use std::{boxed::Box, cmp::{self, Ordering}, mem::replace};
 pub enum AvlTreeErr{
     InvalidInsertion
 }
@@ -50,12 +50,10 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
             right = rnode.get_height();
         }
 
-        return if left > right {left + 1} else {right + 1};
+        cmp::max(left, right) + 1
     }
 
     fn rotate_right(&mut self){
-        if self.left.is_none() { return; }
-
         let mut left = 
             self
             .left
@@ -81,8 +79,6 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
     }
 
     fn rotate_left(&mut self){
-        if self.right.is_none() { return;}
-
         let mut right = 
             self
             .right
@@ -212,6 +208,100 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
         }
     }
 
+    fn get_lower_node(
+        &mut self
+    ) -> AvlNode<T>{
+        if let Some(mut left) = self.left.take() {
+
+            let lower = left.get_lower_node();
+            
+            if left.value != lower.value {
+                self.left = Some(left);
+            }
+            
+            lower
+        }
+        else {
+            self.clone()
+        }
+    }
+
+    pub(crate) fn remove(
+        &mut self, 
+        val: T
+    ) -> Option<T>{
+        if 
+            self.value > val &&
+            let Some(mut left) = self.left.take()
+        {
+            let res = left.remove(val);
+            if 
+                let Some(ref vres) = res &&
+                *vres != left.value
+            {
+                self.left = Some(left);
+            }
+            self.auto_balancing();
+            return res;
+        } 
+        else if 
+            self.value < val && 
+            let Some(mut right) = self.right.take()
+        {
+            let res = right.remove(val);
+            if 
+                let Some(ref vres) = res &&
+                *vres != self.value
+            {
+                self.right = Some(right);
+            }
+            self.auto_balancing();
+            return res;
+        }
+
+        match (
+            self.left.take(), 
+            self.right.take()
+        ){
+            (
+                Some(left), 
+                Some(mut right)
+            ) => {
+                let lower = right.get_lower_node();
+                
+                let old_root = replace(
+                    self, 
+                    lower
+                );
+
+                self.left = Some(left);
+                self.right = Some(right);
+
+                self.auto_balancing();
+
+                Some(old_root.value)
+            }
+            (Some(left), None) => {
+                let old_root = replace(
+                self,
+                *left
+                );
+
+                Some(old_root.value)
+            },
+            (None, Some(right)) => {
+                let old_root = replace(
+                self,
+                *right
+                );
+                Some(old_root.value)
+            },
+            _ => {
+                Some(self.value.clone())
+            }
+        }
+    }
+
 
 
 }
@@ -240,6 +330,29 @@ impl<T: Ord + Eq + Clone>  AvlTree<T>{
                 )
             );
             Ok(())
+        }
+    }
+
+    pub fn remove(
+        &mut self,
+        val: T
+    ) -> Option<T>{
+        if let Some(mut root) = self.root.take() {
+            let res = root.remove(val);
+
+            root.auto_balancing();
+            
+            if 
+                let Some(ref vres) = res &&
+                root.value != *vres
+            {
+                self.root = Some(root);
+            }
+
+            res
+        }
+        else{
+            None
         }
     }
 
@@ -300,6 +413,22 @@ mod avl_tree_tests{
             assert!(avl_tree.search(val));
         }
 
+    }
+
+    #[test]
+    fn test_avl_remove(){
+        let mut avl_tree = avl_tree!(1,2,3,4,5);
+
+        for val in 5..0{
+            let res = avl_tree.remove(val);
+            assert!(
+                res.is_some() &&
+                !avl_tree.search(val)
+            );
+            for bfactors in avl_tree.get_all_balance_factors() {
+                assert!(bfactors.abs() <= 1);
+            }
+        }
     }
 
 }
