@@ -1,33 +1,31 @@
-use std::boxed::Box;
+use std::{boxed::Box, cmp::Ordering, mem::replace};
 pub enum AvlTreeErr{
     InvalidInsertion
 }
 
 #[derive(Clone, Debug)]
-struct Node<T>{
+pub(crate) struct AvlNode<T>{
     value: T,
-    left: Option<Box<Node<T>>>,
-    right: Option<Box<Node<T>>>
+    left: Option<Box<AvlNode<T>>>,
+    right: Option<Box<AvlNode<T>>>
 }
 
 pub struct AvlTree<T>{
-    root: Option<Box<Node<T>>>
+    root: Option<Box<AvlNode<T>>>
 }
 
-impl<T: PartialOrd + PartialEq + Clone> Node<T>{
-    fn new(
-        value: T, 
-        left: Option<Box<Node<T>>>, 
-        right: Option<Box<Node<T>>>
+impl<T: Ord + Eq + Clone> AvlNode<T>{
+    pub(crate) fn new(
+        value: T
     ) -> Self{
         Self {
             value,
-            left,
-            right
+            left: None,
+            right: None
         }
     }
 
-    fn get_balance_factor(&self) -> i64{
+    fn get_balance_factor(&self) -> i8{
         let mut left: i64 = 0;
         let mut right: i64 = 0;
 
@@ -38,7 +36,7 @@ impl<T: PartialOrd + PartialEq + Clone> Node<T>{
             right = rnode.get_height();
         }
 
-        left - right
+        (right - left) as i8
     }
 
     fn get_height(&self) -> i64{
@@ -55,259 +53,253 @@ impl<T: PartialOrd + PartialEq + Clone> Node<T>{
         return if left > right {left + 1} else {right + 1};
     }
 
-}
+    fn rotate_right(&mut self){
+        if self.left.is_none() { return; }
 
-impl <T: PartialOrd + PartialEq + Clone> AvlTree<T>{
-    pub fn new() -> Self{
-        Self { 
-            root: None 
+        let mut left = 
+            self
+            .left
+            .take()
+            .unwrap();
+
+        let left_right = 
+            left
+            .right
+            .take();
+    
+        let mut old_root = replace(
+            self,
+             *left
+        );
+
+        old_root.left = left_right;
+        self.right = Some(
+            Box::new(
+                old_root
+            )
+        );
+    }
+
+    fn rotate_left(&mut self){
+        if self.right.is_none() { return;}
+
+        let mut right = 
+            self
+            .right
+            .take()
+            .unwrap();
+
+        let right_left = 
+            right
+            .left
+            .take();
+    
+        let mut old_root = replace(
+            self,
+             *right
+        );
+
+        old_root.right = right_left;
+
+        self.left = Some(
+            Box::new(
+                old_root
+            )
+        );
+    }
+
+    pub(crate) fn auto_balancing(&mut self){
+        match self.get_balance_factor() {
+            -2 if let Some(ref mut left) = self.left => {
+
+                if left.get_balance_factor() == 1 {
+                    left.rotate_left();
+                }
+
+                self.rotate_right();
+            },
+            2 if let Some(ref mut right) = self.right => {
+
+                if  right.get_balance_factor() == -1 {
+                    right.rotate_right();
+                }
+
+                self.rotate_left();
+            },
+            _ => {}
         }
     }
 
-    fn rotate_right(
-        root: &mut Option<Box<Node<T>>>
-    ){
-        let mut new_root = 
-            root
-            .as_ref()
-            .unwrap()
-            .left
-            .clone();
 
-        let new_left = 
-            new_root
-            .as_ref()
-            .unwrap()
-            .right
-            .clone();
-
-        new_root
-        .as_mut()
-        .unwrap()
-        .right = 
-            root
-            .clone();
-
-        new_root
-        .as_mut()
-        .unwrap()
-        .right
-        .as_mut()
-        .unwrap()
-        .left = new_left;
-
-        *root = new_root;
-    }
-
-    fn rotate_left(
-        root: &mut Option<Box<Node<T>>>
-    ){
-        let mut new_root = 
-            root
-            .as_ref()
-            .unwrap()
-            .right
-            .clone();
-
-        let new_right = 
-            new_root
-            .as_ref()
-            .unwrap()
-            .left
-            .clone();
-
-        new_root
-        .as_mut()
-        .unwrap()
-        .left = 
-            root
-            .clone();
-
-        new_root
-        .as_mut()
-        .unwrap()
-        .left
-        .as_mut()
-        .unwrap()
-        .right = new_right;
-
-        *root = new_root;
-    }
-
-    fn recursive_insertion(
-        root: &mut Option<Box<Node<T>>>, 
+    pub(crate) fn insert(
+        &mut self, 
         val: T
     ) -> Result<(), AvlTreeErr>{
-        
-        if 
-            root
-            .is_none() || 
-            root
-            .as_ref()
-            .unwrap()
-            .value == val 
-        {
+
+        if self.value == val {
             return Err(AvlTreeErr::InvalidInsertion);
         }
 
-        if root.as_ref().unwrap().as_ref().value > val {
-            if root.as_ref().unwrap().left.is_none() {
-                root.as_mut().unwrap().left = Some(
-                    Box::new(
-                        Node::new(val, None, None)
-                    )
-                );
-            }
-            else {
-                AvlTree::recursive_insertion(&mut  root.as_mut().unwrap().left, val)?;
-            }
-        }
-        else {
-            if root.as_ref().unwrap().right.is_none() {
-                root.as_mut().unwrap().right = Some(
-                    Box::new(
-                        Node::new(val, None, None)
-                    )
-                );
-            }
-            else {
-                AvlTree::recursive_insertion(&mut root.as_mut().unwrap().right, val)?;
-            }
-        }
-
-        // left left 
         if 
-            root.as_ref().unwrap().get_balance_factor() > 1 && 
-            root.as_ref().unwrap().left.as_ref().unwrap().get_balance_factor() >= 0 
+            self.value > val && 
+            let Some(ref mut left) = self.left
         {
-            AvlTree::rotate_right(root);
-        }
-        
-        // left right
-        if 
-            root.as_ref().unwrap().get_balance_factor() > 1 && 
-            root.as_ref().unwrap().left.as_ref().unwrap().get_balance_factor() < 0
-        {
-            AvlTree::rotate_left(&mut root.as_mut().unwrap().left);
-            AvlTree::rotate_right(root);
-        }
-
-        // right right 
-        if 
-            root.as_ref().unwrap().get_balance_factor() < -1 &&
-            root.as_ref().unwrap().right.as_ref().unwrap().get_balance_factor() <= 0
-        {
-            AvlTree::rotate_left(root);
-        }
-
-        // right left
-        if 
-            root.as_ref().unwrap().get_balance_factor() < -1 &&
-            root.as_ref().unwrap().right.as_ref().unwrap().get_balance_factor() > 0
-        {
-            AvlTree::rotate_right(&mut root.as_mut().unwrap().right);
-        }
-
-        Ok(())        
-    }
-
-    pub fn recursive_search(
-        node: &Option<Box<Node<T>>>, 
-        val: T
-    ) -> bool{
-        if node.is_none() {
-            return false;
-        }
-
-        let curr_node = node.as_ref().unwrap();
-
-        if curr_node.value == val {
-            true
-        } 
-        else if curr_node.value > val {
-            AvlTree::recursive_search(&curr_node.left, val)
-        }
-        else {
-            AvlTree::recursive_search(&curr_node.right, val)
-        }
-
-    }
-
-    pub fn search(
-        &self, val: T 
-    ) -> bool{
-        AvlTree::recursive_search(&self.root, val)
-    }
-
-    pub fn insert(
-        &mut self, val: T
-    ) -> Result<(), AvlTreeErr>{
-
-        if self.root.is_none() {
-            self.root = Some(
+            left.insert(val)?;
+        }   
+        else if self.value > val {
+            self.left = Some(
                 Box::new(
-                    Node::new(
-                        val, 
-                        None,
-                            None
-                    )
+                    AvlNode::new(val)
                 )
-            )
+            );
         }
-        else {
-            AvlTree::recursive_insertion(
-                &mut self
-                .root, 
-                val
-            )?;
+        else if 
+            self.value < val && 
+            let Some(ref mut right) = self.right
+        {
+            right.insert(val)?;
+        }   
+        else{
+            self.right = Some(
+                Box::new(
+                    AvlNode::new(val)
+                )
+            );
         }
 
+        self.auto_balancing();
+        
         Ok(())
     }
 
+    pub(crate) fn search(
+        &self, 
+        val: T
+    ) -> bool{
+        match self.value.cmp(&val) {
+            Ordering::Equal => true,
+            Ordering::Greater => {
+                if let Some(ref left) = self.left {
+                    left.search(val)
+                } 
+                else{
+                    false
+                }
+            },
+            Ordering::Less => {
+                if let Some(ref right) = self.right {
+                    right.search(val)
+                } 
+                else{
+                    false
+                }
+            }
+        }
+    }
+
+    pub(crate) fn get_all_balance_factors(
+        &self, 
+        vec: &mut Vec<i8>
+    ){
+        if let Some(ref left) = self.left {
+            left.get_all_balance_factors(vec);
+        }
+
+        vec.push(self.get_balance_factor());
+
+        if let Some(ref right) = self.right {
+            right.get_all_balance_factors(vec);
+        }
+    }
+
+
+
+}
+
+
+impl<T: Ord + Eq + Clone>  AvlTree<T>{
+    pub fn new() -> Self{
+        Self {
+            root: None
+        }
+    }
+
+    pub fn insert(
+        &mut self, 
+        val: T
+    ) -> Result<(), AvlTreeErr>{
+        if let Some(ref mut root) = self.root {
+            let res = root.insert(val);
+            root.auto_balancing();
+            res
+        }
+        else {
+            self.root = Some(
+                Box::new(
+                    AvlNode::new(val)
+                )
+            );
+            Ok(())
+        }
+    }
+
+    pub fn search(
+        &self, 
+        val: T
+    ) -> bool{
+        if let Some(ref root) = self.root {
+            root.search(val) 
+        }
+        else {
+            false
+        }
+    }
+
+    pub fn get_all_balance_factors(&self) -> Vec<i8>{
+        let mut vec = Vec::new();
+        if let Some(ref root) = self.root {
+            root.get_all_balance_factors(&mut vec);
+        }
+        vec
+    }
+
+}
+
+#[macro_export]
+macro_rules! avl_tree {
+    ($($val:expr),* $(,)?) => {
+        {
+            let mut avl_tree = AvlTree::new();
+            $(
+                assert!( avl_tree.insert($val).is_ok() );    
+            )*
+            avl_tree
+        }
+    };
 }
 
 #[cfg(test)]
 mod avl_tree_tests{
     use crate::avl_tree::avl_tree::AvlTree;
 
-    macro_rules! add_test {
-        ($tree:expr => [$($value:expr),* $(,)?]) => {
-            $(
-                let _ = $tree.insert($value);
-                assert!($tree.search($value));
-                assert!( $tree.root.as_ref().unwrap().get_balance_factor().abs() <= 1 );
-            )*
-        };
+    #[test]
+    fn test_avl_insertion(){
+
+        let avl_tree = avl_tree!(1,2,3,4,5);
+
+        for bfactors in avl_tree.get_all_balance_factors() {
+            assert!(bfactors.abs() <= 1);
+        }
     }
 
     #[test]
-    fn test_avl_insertion1(){
+    fn test_avl_search(){
+        let avl_tree = avl_tree!(1,2,3,4,5,6,7,8,9,10);
 
-        let mut avl_tree = AvlTree::<u8>::new();
+        for val in 1..11{
+            assert!(avl_tree.search(val));
+        }
 
-        add_test!(
-            avl_tree => [20,19,18,17,16,15]
-        );
-    }
-
-    #[test]
-    fn test_avl_insertion2(){
-        let mut avl_tree = AvlTree::<u8>::new();
-
-        add_test!(
-            avl_tree => [1,2,3,4,5,6,7,8,9,10]
-        );
-    }
-
-
-    #[test]
-    fn test_invalid_avl_insertion(){
-        let mut avl_tree = AvlTree::<u8>::new();
-        let _ = avl_tree.insert(19);
-        let err = avl_tree.insert(19);
-
-        assert!( err.is_err() );
     }
 
 }
