@@ -1,3 +1,4 @@
+pub mod kd_tree;
 mod max;
 mod min;
 mod find;
