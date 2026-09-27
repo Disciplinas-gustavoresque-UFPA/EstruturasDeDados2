@@ -42,6 +42,15 @@ impl TipoEntrada {
     }
 }
 
+/// Configuração de uma execução experimental.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ConfiguracaoExperimento {
+    pub algoritmo: Algoritmo,
+    pub tipo_entrada: TipoEntrada,
+    pub tamanho: usize,
+    pub repeticoes: usize,
+}
+
 #[cfg(test)]
 mod testes {
     use super::*;
@@ -61,5 +70,17 @@ mod testes {
         assert_eq!(TipoEntrada::Invertida.nome(), "invertida");
         assert_eq!(TipoEntrada::QuaseOrdenada.nome(), "quase_ordenada");
         assert_eq!(TipoEntrada::ComDuplicatas.nome(), "com_duplicatas");
+    }
+
+    #[test]
+    fn cria_configuracao_com_dez_repeticoes() {
+        let configuracao = ConfiguracaoExperimento {
+            algoritmo: Algoritmo::Quick,
+            tipo_entrada: TipoEntrada::Aleatoria,
+            tamanho: 1_000,
+            repeticoes: 10,
+        };
+        assert_eq!(configuracao.repeticoes, 10);
+        assert_eq!(configuracao.tamanho, 1_000);
     }
 }

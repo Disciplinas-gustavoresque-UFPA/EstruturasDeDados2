@@ -1,4 +1,4 @@
-use super::configuracao::{Algoritmo, TipoEntrada};
+use super::configuracao::{Algoritmo, ConfiguracaoExperimento, TipoEntrada};
 use super::medicao::{Medicao, medir};
 use crate::algorithms::{
     heap::heap_sort, insertion::insertion_sort, merge::merge_sort, quick::quick_sort,
@@ -32,6 +32,18 @@ fn gerar_entrada(tipo_entrada: TipoEntrada, tamanho: usize) -> Vec<i32> {
         TipoEntrada::QuaseOrdenada => entrada_quase_ordenada(tamanho),
         TipoEntrada::ComDuplicatas => entrada_com_duplicatas(tamanho),
     }
+}
+
+/// Executa todas as repetições de uma configuração experimental.
+///
+/// A mesma entrada é reutilizada em todas as repetições, garantindo
+/// que as medições de uma mesma configuração partam dos mesmos dados.
+pub fn executar_repeticoes(configuracao: ConfiguracaoExperimento) -> Vec<Medicao> {
+    let entrada = gerar_entrada(configuracao.tipo_entrada, configuracao.tamanho);
+
+    (0..configuracao.repeticoes)
+        .map(|_| medir(selecionar_algoritmo(configuracao.algoritmo), &entrada))
+        .collect()
 }
 
 #[cfg(test)]
@@ -76,5 +88,29 @@ mod testes {
         let medicao = executar(Algoritmo::Heap, TipoEntrada::Aleatoria, 0);
 
         assert!(medicao.duracao >= std::time::Duration::ZERO);
+    }
+
+    #[test]
+    fn executa_dez_repeticoes() {
+        let configuracao = ConfiguracaoExperimento {
+            algoritmo: Algoritmo::Merge,
+            tipo_entrada: TipoEntrada::Aleatoria,
+            tamanho: 100,
+            repeticoes: 10,
+        };
+        let medicoes = executar_repeticoes(configuracao);
+        assert_eq!(medicoes.len(), 10);
+    }
+
+    #[test]
+    fn executa_zero_repeticoes() {
+        let configuracao = ConfiguracaoExperimento {
+            algoritmo: Algoritmo::Heap,
+            tipo_entrada: TipoEntrada::Aleatoria,
+            tamanho: 100,
+            repeticoes: 0,
+        };
+        let medicoes = executar_repeticoes(configuracao);
+        assert!(medicoes.is_empty());
     }
 }
