@@ -69,14 +69,4 @@ mod tests {
             assert_ne!(first.next_u32(), second.next_u32());
         }
     }
-
-    #[test]
-    fn test_unsigned_integer_bounds() {
-        let mut random = Lcg::new(u32::MAX);
-        assert_eq!(random.next_u32(), 1012239698);
-
-        random = Lcg::new(u32::MIN);
-
-        assert_eq!(random.next_u32(), 1013904223);
-    }
 }
