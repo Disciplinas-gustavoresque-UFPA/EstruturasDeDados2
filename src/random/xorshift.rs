@@ -1,3 +1,6 @@
+// XorShifts generate the next number in their sequence by repeatedly taking the exclusive or (XOR)
+// of a number with a bit-shifted version of itself.
+// Source: https://en.wikipedia.org/wiki/Xorshift
 pub struct XorShift {
     state: u32
 }
