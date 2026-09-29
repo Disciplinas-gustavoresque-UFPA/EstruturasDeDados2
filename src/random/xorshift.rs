@@ -2,7 +2,7 @@
 // of a number with a bit-shifted version of itself.
 // Source: https://en.wikipedia.org/wiki/Xorshift
 pub struct XorShift {
-    state: u32
+    state: u32,
 }
 
 impl XorShift {
@@ -17,7 +17,7 @@ impl XorShift {
         value ^= value >> 17;
         value ^= value << 5;
         self.state = value;
-        return value
+        return value;
     }
 }
 

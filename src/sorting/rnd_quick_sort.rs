@@ -1,14 +1,13 @@
 use crate::random::Pcg;
 
 pub fn rnd_quick_sort<T: Ord + Copy>(elements: &mut [T], rnd: &mut Pcg) {
-    
     let n = elements.len();
-    if n <=1 {   
+    if n <= 1 {
         return;
     }
 
     let rnd_idx: usize = (rnd.next_u32() as usize) % n;
-    elements.swap(n - 1,rnd_idx);
+    elements.swap(n - 1, rnd_idx);
 
     let pivot = partition(elements);
     rnd_quick_sort(&mut elements[..pivot], rnd);
@@ -16,7 +15,6 @@ pub fn rnd_quick_sort<T: Ord + Copy>(elements: &mut [T], rnd: &mut Pcg) {
 }
 
 fn partition<T: Ord + Copy>(elements: &mut [T]) -> usize {
-    
     let last_idx = elements.len() - 1;
     let mut i = 0;
     for j in 0..last_idx {
@@ -25,14 +23,14 @@ fn partition<T: Ord + Copy>(elements: &mut [T]) -> usize {
             i = i + 1;
         }
     }
-    elements.swap(i,last_idx);
+    elements.swap(i, last_idx);
     return i;
 }
 
 #[cfg(test)]
 mod tests {
-    use super::rnd_quick_sort;
     use super::Pcg;
+    use super::rnd_quick_sort;
 
     #[test]
     fn test_empty() {
@@ -50,7 +48,7 @@ mod tests {
         assert_eq!(values, [42]);
     }
 
-     #[test]
+    #[test]
     fn test_already_sorted() {
         let mut values = [1, 2, 3, 4, 5];
         let mut rnd = Pcg::new(2);
