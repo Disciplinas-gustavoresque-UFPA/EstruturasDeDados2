@@ -15,8 +15,7 @@ pub fn bfind<T: Eq + Ord>(elements: &[T], target: &T) -> Option<usize> {
             right = mid;
         }
     }
-
-    None
+    return None;
 }
 
 #[cfg(test)]
