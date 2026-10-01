@@ -9,7 +9,7 @@ pub fn heap_sort<T: Ord + Copy>(elements: &mut [T]) {
 }
 
 fn max_heap<T: Ord + Copy>(elements: &mut [T]) {
-    for depth in (0..elements.len()/2).rev() {
+    for depth in (0..elements.len() / 2).rev() {
         sieve(elements, depth);
     }
 }
@@ -59,7 +59,7 @@ mod tests {
         assert_eq!(values, [1, 2, 3, 4, 5]);
     }
 
-        #[test]
+    #[test]
     fn test_already_sorted() {
         let mut values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         heap_sort(&mut values);

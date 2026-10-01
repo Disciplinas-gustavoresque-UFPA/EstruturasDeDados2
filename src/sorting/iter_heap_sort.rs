@@ -9,7 +9,7 @@ pub fn iter_heap_sort<T: Ord + Copy>(elements: &mut [T]) {
 }
 
 fn iter_max_heap<T: Ord + Copy>(elements: &mut [T]) {
-    for depth in (0..elements.len()/2).rev() {
+    for depth in (0..elements.len() / 2).rev() {
         iter_sieve(elements, depth);
     }
 }
@@ -25,8 +25,7 @@ fn iter_sieve<T: Ord + Copy>(elements: &mut [T], mut depth: usize) {
         }
         if elements[depth] >= elements[largest_idx] {
             break;
-        }
-        else {
+        } else {
             elements.swap(depth, largest_idx);
             depth = largest_idx;
             left = 2 * depth + 1;
@@ -61,7 +60,7 @@ mod tests {
         assert_eq!(values, [1, 2, 3, 4, 5]);
     }
 
-        #[test]
+    #[test]
     fn test_already_sorted() {
         let mut values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         iter_heap_sort(&mut values);
