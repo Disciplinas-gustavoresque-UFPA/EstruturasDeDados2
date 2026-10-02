@@ -10,5 +10,5 @@ criterion = { version = "0.8.2", default-features = false, features = ["cargo_be
 
 [[bench]]
 name = "encryption"
-path = "src/encryption/bench.rs"
+path = "benches/encryption_module_benchmark.rs"
 harness = false

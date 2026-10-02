@@ -2,7 +2,7 @@ use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_m
 use std::hint::black_box;
 
 // Reuse the binary's module tree without introducing a library target.
-#[path = "mod.rs"]
+#[path = "../src/encryption/mod.rs"]
 mod encryption;
 
 fn text_ciphers(c: &mut Criterion) {
