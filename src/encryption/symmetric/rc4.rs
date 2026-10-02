@@ -42,6 +42,15 @@ mod tests {
     fn test_rc4_encrypt() {
         let key = b"mysecretkey";
         let encrypted = rc4(b"helloworld", key);
-        assert_eq!(encrypted, "3e14233d258b2c8b1a155a");
+        assert_eq!(encrypted, "82b614d4af3e51e2ac69");
+    }
+
+    #[test]
+    fn test_rc4_rfc_6229_initial_stream() {
+        // RFC 6229, section 2: the first 32 bytes for key 0x0102030405.
+        assert_eq!(
+            rc4(&[0; 32], &[1, 2, 3, 4, 5]),
+            "b2396305f03dc027ccc3524a0a1118a86982944f18fc82d589c403a47a0d0919"
+        );
     }
 }
