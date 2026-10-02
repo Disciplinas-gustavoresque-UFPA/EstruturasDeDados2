@@ -113,4 +113,29 @@ mod tests {
 
         xor_encrypt(input, key);
     }
+
+    #[test]
+    fn test_all_byte_values_and_single_byte_keys() {
+        let input: Vec<u8> = (0..=255).collect();
+        for key in 0..=255 {
+            let encrypted = xor_encrypt(&input, &[key]);
+            let expected: Vec<u8> = (0..=255).map(|byte| byte ^ key).collect();
+            assert_eq!(encrypted, expected);
+            assert_eq!(xor_encrypt(&encrypted, &[key]), input);
+        }
+    }
+
+    #[test]
+    fn test_binary_repeating_key() {
+        assert_eq!(
+            xor_encrypt(&[0, 255, 128, 1, 127], &[255, 128]),
+            [255, 127, 127, 129, 128]
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "`key` must not have zero length.")]
+    fn test_empty_input_still_requires_key() {
+        xor_encrypt(&[], &[]);
+    }
 }

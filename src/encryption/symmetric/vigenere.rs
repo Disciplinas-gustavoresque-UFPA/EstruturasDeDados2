@@ -104,4 +104,49 @@ mod tests {
 
         assert_eq!(decrypted, input);
     }
+
+    #[test]
+    fn test_case_and_key_filtering() {
+        assert_eq!(
+            vigenere_cipher("Attack at dawn!", "lE-m0oN", true),
+            "Lxfopv ef rnhr!"
+        );
+        assert_eq!(
+            vigenere_cipher("Lxfopv ef rnhr!", "lE-m0oN", false),
+            "Attack at dawn!"
+        );
+    }
+
+    #[test]
+    fn test_non_letters_do_not_advance_key() {
+        assert_eq!(vigenere_cipher("Aé!a中\0Z🦀z", "BC", true), "Bé!c中\0A🦀b");
+        assert_eq!(vigenere_cipher("Bé!c中\0A🦀b", "BC", false), "Aé!a中\0Z🦀z");
+        assert_eq!(vigenere_cipher("é中🦀!", "BC", true), "é中🦀!");
+    }
+
+    #[test]
+    fn test_unicode_key_uppercase_expansion() {
+        assert_eq!(vigenere_cipher("ABC", "ß", true), "STU");
+        assert_eq!(vigenere_cipher("ABC", "ı", true), "IJK");
+        assert_eq!(vigenere_cipher("ABC", "éA中", true), "ABC");
+        assert_eq!(vigenere_cipher("STU", "ß", false), "ABC");
+    }
+
+    #[test]
+    fn test_invalid_keys_panic_even_for_empty_input() {
+        for key in ["", "123!?", "é中🦀"] {
+            for text in ["", "ABC"] {
+                for encrypt in [true, false] {
+                    let panic = std::panic::catch_unwind(|| vigenere_cipher(text, key, encrypt))
+                        .expect_err("a key without ASCII letters after uppercasing must panic");
+                    assert_eq!(
+                        panic.downcast_ref::<&str>().copied(),
+                        Some(
+                            "The key must not be empty. Non-ASCII characters are not supported and will be ignored."
+                        )
+                    );
+                }
+            }
+        }
+    }
 }

@@ -45,4 +45,28 @@ mod tests {
     fn test_non_alpha_unchanged() {
         assert_eq!(caesar_cipher("123!@#", 5), "123!@#");
     }
+
+    #[test]
+    fn test_empty_and_unicode_input() {
+        assert_eq!(caesar_cipher("", 26), "");
+        assert_eq!(caesar_cipher("é中🦀\0\nAz", 1), "é中🦀\0\nBa");
+        assert_eq!(caesar_cipher("Az é!", 0), "Az é!");
+    }
+
+    #[test]
+    fn test_full_alphabet_roundtrips() {
+        let text = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        for shift in -104..=104 {
+            let encrypted = caesar_cipher(text, shift);
+            assert_eq!(caesar_cipher(&encrypted, -shift), text);
+            assert_eq!(caesar_cipher(text, shift + 26), encrypted);
+        }
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "attempt to add with overflow")]
+    fn test_extreme_positive_shift() {
+        caesar_cipher("zZ", i32::MAX);
+    }
 }
