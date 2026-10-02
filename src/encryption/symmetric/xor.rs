@@ -4,9 +4,7 @@
 ///
 /// Panics if `key` is empty, even when `input` is empty.
 pub fn xor_encrypt(input: &[u8], key: &[u8]) -> Vec<u8> {
-    if key.is_empty() {
-        panic!("`key` must not have zero length.");
-    }
+    assert!(!key.is_empty(), "`key` must not have zero length.");
 
     input
         .iter()
