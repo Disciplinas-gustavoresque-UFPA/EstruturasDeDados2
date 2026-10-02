@@ -9,8 +9,6 @@ pub fn shift_char(c: char, shift: i32) -> char {
 
 #[cfg(test)]
 mod tests {
-    use super::shift_char;
-
     #[test]
     fn test_every_ascii_letter_and_shift() {
         for base in *b"Aa" {
@@ -18,7 +16,7 @@ mod tests {
                 for shift in -104..=104 {
                     let offset = (i64::from(letter - base) + i64::from(shift)).rem_euclid(26);
                     let expected = char::from(base + offset as u8);
-                    assert_eq!(shift_char(char::from(letter), shift), expected);
+                    assert_eq!(super::shift_char(char::from(letter), shift), expected);
                 }
             }
         }

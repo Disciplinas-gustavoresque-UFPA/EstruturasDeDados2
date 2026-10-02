@@ -13,14 +13,12 @@ pub fn xor_encrypt(input: &[u8], key: &[u8]) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::xor_encrypt;
-
     #[test]
     fn test_xor_encrypt_basic() {
         let input = b"hello";
         let key = b"key";
 
-        let result = xor_encrypt(input, key);
+        let result = super::xor_encrypt(input, key);
 
         assert_eq!(
             result,
@@ -39,7 +37,7 @@ mod tests {
         let input = b"abcdef";
         let key = b"ab";
 
-        let result = xor_encrypt(input, key);
+        let result = super::xor_encrypt(input, key);
 
         assert_eq!(
             result,
@@ -59,7 +57,7 @@ mod tests {
         let input = b"";
         let key = b"key";
 
-        let result = xor_encrypt(input, key);
+        let result = super::xor_encrypt(input, key);
 
         assert!(result.is_empty());
     }
@@ -69,7 +67,7 @@ mod tests {
         let input = &[0b1010_1010];
         let key = &[0b1111_0000];
 
-        let result = xor_encrypt(input, key);
+        let result = super::xor_encrypt(input, key);
 
         assert_eq!(result, vec![0b0101_1010]);
     }
@@ -79,8 +77,8 @@ mod tests {
         let input = b"Hello, world!";
         let key = b"secret";
 
-        let encrypted = xor_encrypt(input, key);
-        let decrypted = xor_encrypt(&encrypted, key);
+        let encrypted = super::xor_encrypt(input, key);
+        let decrypted = super::xor_encrypt(&encrypted, key);
 
         assert_eq!(decrypted, input);
     }
@@ -90,7 +88,7 @@ mod tests {
         let input = b"abc";
         let key = b"longerkey";
 
-        let result = xor_encrypt(input, key);
+        let result = super::xor_encrypt(input, key);
 
         assert_eq!(result, vec![b'a' ^ b'l', b'b' ^ b'o', b'c' ^ b'n',]);
     }
@@ -100,7 +98,7 @@ mod tests {
         let input = b"hello";
         let key = &[0u8];
 
-        let encrypted = xor_encrypt(input, key);
+        let encrypted = super::xor_encrypt(input, key);
 
         assert_eq!(encrypted, input);
     }
@@ -111,24 +109,24 @@ mod tests {
         let input = b"hello";
         let key = b"";
 
-        xor_encrypt(input, key);
+        super::xor_encrypt(input, key);
     }
 
     #[test]
     fn test_all_byte_values_and_single_byte_keys() {
         let input: Vec<u8> = (0..=255).collect();
         for key in 0..=255 {
-            let encrypted = xor_encrypt(&input, &[key]);
+            let encrypted = super::xor_encrypt(&input, &[key]);
             let expected: Vec<u8> = (0..=255).map(|byte| byte ^ key).collect();
             assert_eq!(encrypted, expected);
-            assert_eq!(xor_encrypt(&encrypted, &[key]), input);
+            assert_eq!(super::xor_encrypt(&encrypted, &[key]), input);
         }
     }
 
     #[test]
     fn test_binary_repeating_key() {
         assert_eq!(
-            xor_encrypt(&[0, 255, 128, 1, 127], &[255, 128]),
+            super::xor_encrypt(&[0, 255, 128, 1, 127], &[255, 128]),
             [255, 127, 127, 129, 128]
         );
     }
@@ -136,6 +134,6 @@ mod tests {
     #[test]
     #[should_panic(expected = "`key` must not have zero length.")]
     fn test_empty_input_still_requires_key() {
-        xor_encrypt(&[], &[]);
+        super::xor_encrypt(&[], &[]);
     }
 }

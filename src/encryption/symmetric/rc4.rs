@@ -36,12 +36,10 @@ fn pseudo_random_generator(s: &mut Vec<u8>, input_len: usize) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use super::rc4;
-
     #[test]
     fn test_rc4_encrypt() {
         let key = b"mysecretkey";
-        let encrypted = rc4(b"helloworld", key);
+        let encrypted = super::rc4(b"helloworld", key);
         assert_eq!(encrypted, "82b614d4af3e51e2ac69");
     }
 
@@ -49,7 +47,7 @@ mod tests {
     fn test_rc4_rfc_6229_initial_stream() {
         // RFC 6229, section 2: the first 32 bytes for key 0x0102030405.
         assert_eq!(
-            rc4(&[0; 32], &[1, 2, 3, 4, 5]),
+            super::rc4(&[0; 32], &[1, 2, 3, 4, 5]),
             "b2396305f03dc027ccc3524a0a1118a86982944f18fc82d589c403a47a0d0919"
         );
     }
@@ -57,7 +55,7 @@ mod tests {
     #[test]
     fn test_rc4_rfc_6229_stream_boundaries() {
         // RFC 6229, section 2: published blocks at and beyond state wraparound.
-        let stream = rc4(&[0; 4112], &[1, 2, 3, 4, 5]);
+        let stream = super::rc4(&[0; 4112], &[1, 2, 3, 4, 5]);
         for (offset, expected) in [
             (240, "28cb1132c96ce286421dcaadb8b69eae"),
             (256, "1cfcf62b03eddb641d77dfcf7f8d8c93"),
@@ -68,7 +66,10 @@ mod tests {
             assert_eq!(&stream[offset * 2..(offset + 16) * 2], expected);
         }
         for len in [0, 1, 15, 16, 255, 256, 257, 511, 512, 513, 4096, 4112] {
-            assert_eq!(rc4(&vec![0; len], &[1, 2, 3, 4, 5]), stream[..len * 2]);
+            assert_eq!(
+                super::rc4(&vec![0; len], &[1, 2, 3, 4, 5]),
+                stream[..len * 2]
+            );
         }
     }
 
@@ -79,18 +80,18 @@ mod tests {
             (&[255][..], "6d24afdb"),
             (&[1, 2, 3, 4, 5][..], "b238e3fa"),
         ] {
-            assert_eq!(rc4(&[0, 1, 128, 255], key), expected);
-            assert_eq!(rc4(&[], key), "");
+            assert_eq!(super::rc4(&[0, 1, 128, 255], key), expected);
+            assert_eq!(super::rc4(&[], key), "");
         }
     }
 
     #[test]
     fn test_key_bytes_after_state_size_are_unused() {
         let key: Vec<u8> = (0..=255).chain(0..44).collect();
-        assert_eq!(rc4(&[0, 1, 128, 255], &key), "5e2f374d");
+        assert_eq!(super::rc4(&[0, 1, 128, 255], &key), "5e2f374d");
         assert_eq!(
-            rc4(&[0, 1, 128, 255], &key),
-            rc4(&[0, 1, 128, 255], &key[..256])
+            super::rc4(&[0, 1, 128, 255], &key),
+            super::rc4(&[0, 1, 128, 255], &key[..256])
         );
     }
 
@@ -104,20 +105,20 @@ mod tests {
                 .collect()
         };
         for key in [&[0][..], &[255][..], b"mysecretkey"] {
-            let encrypted = decode(rc4(&input, key));
-            assert_eq!(decode(rc4(&encrypted, key)), input);
+            let encrypted = decode(super::rc4(&input, key));
+            assert_eq!(decode(super::rc4(&encrypted, key)), input);
         }
     }
 
     #[test]
     #[should_panic(expected = "attempt to calculate the remainder with a divisor of zero")]
     fn test_empty_key() {
-        rc4(b"text", &[]);
+        super::rc4(b"text", &[]);
     }
 
     #[test]
     #[should_panic(expected = "attempt to calculate the remainder with a divisor of zero")]
     fn test_empty_input_still_requires_key() {
-        rc4(&[], &[]);
+        super::rc4(&[], &[]);
     }
 }
