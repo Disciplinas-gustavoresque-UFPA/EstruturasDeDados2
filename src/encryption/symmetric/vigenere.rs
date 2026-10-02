@@ -16,11 +16,10 @@ pub fn vigenere_cipher(text: &str, key: &str, encrypt: bool) -> String {
         .map(|c| c as i32 - b'A' as i32)
         .collect();
 
-    if key_shifts.is_empty() {
-        panic!(
-            "The key must not be empty. Non-ASCII characters are not supported and will be ignored."
-        );
-    }
+    assert!(
+        !key_shifts.is_empty(),
+        "The key must not be empty. Non-ASCII characters are not supported and will be ignored."
+    );
 
     let mut index = 0;
 
