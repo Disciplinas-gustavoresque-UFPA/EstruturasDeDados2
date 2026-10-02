@@ -5,14 +5,13 @@
 /// Panics if `key` is empty, even when `input` is empty.
 pub fn xor_encrypt(input: &[u8], key: &[u8]) -> Vec<u8> {
     if key.is_empty() {
-        // erro não recuperável (chave nunca deve ser vazia)
         panic!("`key` must not have zero length.");
     }
 
     input
         .iter()
-        .enumerate()
-        .map(|(i, &byte)| byte ^ key[i % key.len()])
+        .zip(key.iter().cycle())
+        .map(|(&byte, &key_byte)| byte ^ key_byte)
         .collect()
 }
 
