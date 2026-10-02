@@ -1,3 +1,8 @@
+/// XORs each input byte with the repeating key. Apply twice to recover the input.
+///
+/// # Panics
+///
+/// Panics if `key` is empty, even when `input` is empty.
 pub fn xor_encrypt(input: &[u8], key: &[u8]) -> Vec<u8> {
     if key.is_empty() {
         // erro não recuperável (chave nunca deve ser vazia)

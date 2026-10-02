@@ -1,3 +1,10 @@
+/// Applies RC4 and returns lowercase hexadecimal ciphertext.
+/// To decrypt, decode the hexadecimal ciphertext to bytes before calling again.
+/// Each call starts a new stream; key bytes after the first 256 are unused.
+///
+/// # Panics
+///
+/// Panics if `key` is empty, even when `input` is empty.
 pub fn rc4(input: &[u8], key: &[u8]) -> String {
     let mut s: Vec<u8> = (0..=255).collect();
 

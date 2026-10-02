@@ -1,3 +1,5 @@
+//! Cipher implementations and shared ASCII alphabet arithmetic.
+
 mod caesar;
 mod rc4;
 mod utils;

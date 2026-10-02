@@ -1,5 +1,11 @@
 use crate::encryption::symmetric::shift_char;
 
+/// Shifts ASCII letters by `shift`, preserving case and all other characters.
+/// Use the opposite shift to decrypt.
+///
+/// # Panics
+///
+/// With overflow checks enabled, panics if a letter's offset plus `shift` overflows.
 pub fn caesar_cipher(text: &str, shift: i32) -> String {
     return text
         .chars()

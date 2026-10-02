@@ -1,5 +1,13 @@
 use crate::encryption::symmetric::shift_char;
 
+/// Encrypts when `encrypt` is true and decrypts otherwise, preserving case.
+/// Only ASCII letters in `text` advance the repeating key; other characters
+/// remain unchanged. The key is Unicode-uppercased before retaining ASCII
+/// letters, so characters such as `ß` expand to usable key letters (`SS`).
+///
+/// # Panics
+///
+/// Panics if the uppercased key has no ASCII letters, even for empty text.
 pub fn vigenere_cipher(text: &str, key: &str, encrypt: bool) -> String {
     let key_bytes: Vec<i32> = key
         .to_uppercase()
@@ -87,8 +95,6 @@ mod tests {
 
         let result = super::vigenere_cipher(input, key, true);
 
-        // Expected behavior depends on your implementation.
-        // This assumes spaces and punctuation are left unchanged.
         assert_eq!(result, "RIJVS UYVJN!");
     }
 

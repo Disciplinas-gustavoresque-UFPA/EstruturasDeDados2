@@ -1,5 +1,6 @@
 const ALPHABET_SIZE: i32 = 26;
 
+/// Shifts an ASCII letter, preserving its case. Callers must validate `c`.
 pub fn shift_char(c: char, shift: i32) -> char {
     let base = if c.is_ascii_uppercase() { b'A' } else { b'a' };
     let offset = ((c as i32 - base as i32 + shift).rem_euclid(ALPHABET_SIZE)) as u8;
