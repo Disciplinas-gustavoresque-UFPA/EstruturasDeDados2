@@ -1,18 +1,17 @@
-use crate::encryption::symmetric::shift_char;
+use super::shift_char;
 
 /// Shifts ASCII letters by `shift`, preserving case and all other characters.
 /// All `i32` shifts are supported modulo 26. Decrypt with the opposite of the
 /// normalized shift: `-shift.rem_euclid(26)`.
 pub fn caesar_cipher(text: &str, shift: i32) -> String {
-    return text
-        .chars()
+    text.chars()
         .map(|c| {
             if !c.is_ascii_alphabetic() {
                 return c;
             }
             shift_char(c, shift)
         })
-        .collect();
+        .collect()
 }
 
 #[cfg(test)]
