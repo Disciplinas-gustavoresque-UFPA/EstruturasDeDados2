@@ -1,4 +1,4 @@
-use crate::encryption::symmetric::shift_char;
+use super::shift_char;
 
 /// Encrypts when `encrypt` is true and decrypts otherwise, preserving case.
 /// Only ASCII letters in `text` advance the repeating key; other characters
@@ -9,14 +9,14 @@ use crate::encryption::symmetric::shift_char;
 ///
 /// Panics if the uppercased key has no ASCII letters, even for empty text.
 pub fn vigenere_cipher(text: &str, key: &str, encrypt: bool) -> String {
-    let key_bytes: Vec<i32> = key
+    let key_shifts: Vec<i32> = key
         .to_uppercase()
         .chars()
         .filter(|c| c.is_ascii_alphabetic())
         .map(|c| c as i32 - b'A' as i32)
         .collect();
 
-    if key_bytes.is_empty() {
+    if key_shifts.is_empty() {
         panic!(
             "The key must not be empty. Non-ASCII characters are not supported and will be ignored."
         );
@@ -29,9 +29,9 @@ pub fn vigenere_cipher(text: &str, key: &str, encrypt: bool) -> String {
             if !c.is_ascii_alphabetic() {
                 return c;
             }
-            let shift = key_bytes[index % key_bytes.len()];
+            let shift = key_shifts[index % key_shifts.len()];
             index += 1;
-            return shift_char(c, if encrypt { shift } else { -shift });
+            shift_char(c, if encrypt { shift } else { -shift })
         })
         .collect()
 }
