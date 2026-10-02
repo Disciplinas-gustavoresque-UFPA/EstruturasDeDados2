@@ -6,6 +6,8 @@
 ///
 /// Panics if `key` is empty, even when `input` is empty.
 pub fn rc4(input: &[u8], key: &[u8]) -> String {
+    assert!(!key.is_empty(), "`key` must not have zero length.");
+
     let mut s: Vec<u8> = (0..=255).collect();
 
     let mut j = 0;
@@ -118,13 +120,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "attempt to calculate the remainder with a divisor of zero")]
+    #[should_panic(expected = "`key` must not have zero length.")]
     fn test_empty_key() {
         super::rc4(b"text", &[]);
     }
 
     #[test]
-    #[should_panic(expected = "attempt to calculate the remainder with a divisor of zero")]
+    #[should_panic(expected = "`key` must not have zero length.")]
     fn test_empty_input_still_requires_key() {
         super::rc4(&[], &[]);
     }
