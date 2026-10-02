@@ -18,24 +18,16 @@ fn text_ciphers(c: &mut Criterion) {
             group.bench_with_input(BenchmarkId::new("caesar", text.len()), &text, |b, text| {
                 b.iter(|| encryption::caesar_cipher(black_box(text), black_box(7)));
             });
-            group.bench_with_input(
-                BenchmarkId::new("vigenere_encrypt", text.len()),
-                &text,
-                |b, text| {
+            for (name, input, encrypt) in [
+                ("vigenere_encrypt", &text, true),
+                ("vigenere_decrypt", &encrypted, false),
+            ] {
+                group.bench_with_input(BenchmarkId::new(name, text.len()), input, |b, text| {
                     b.iter(|| {
-                        encryption::vigenere_cipher(black_box(text), black_box("LeMoN"), true)
+                        encryption::vigenere_cipher(black_box(text), black_box("LeMoN"), encrypt)
                     });
-                },
-            );
-            group.bench_with_input(
-                BenchmarkId::new("vigenere_decrypt", text.len()),
-                &encrypted,
-                |b, text| {
-                    b.iter(|| {
-                        encryption::vigenere_cipher(black_box(text), black_box("LeMoN"), false)
-                    });
-                },
-            );
+                });
+            }
         }
         group.finish();
     }
