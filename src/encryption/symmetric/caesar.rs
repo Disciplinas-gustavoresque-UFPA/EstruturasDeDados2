@@ -1,11 +1,8 @@
 use crate::encryption::symmetric::shift_char;
 
 /// Shifts ASCII letters by `shift`, preserving case and all other characters.
-/// Use the opposite shift to decrypt.
-///
-/// # Panics
-///
-/// With overflow checks enabled, panics if a letter's offset plus `shift` overflows.
+/// All `i32` shifts are supported modulo 26. Decrypt with the opposite of the
+/// normalized shift: `-shift.rem_euclid(26)`.
 pub fn caesar_cipher(text: &str, shift: i32) -> String {
     return text
         .chars()
@@ -68,9 +65,20 @@ mod tests {
     }
 
     #[test]
-    #[cfg(debug_assertions)]
-    #[should_panic(expected = "attempt to add with overflow")]
     fn test_extreme_positive_shift() {
-        super::caesar_cipher("zZ", i32::MAX);
+        assert_eq!(super::caesar_cipher("zZ", i32::MAX), "wW");
+    }
+
+    #[test]
+    fn test_extreme_shift_roundtrips() {
+        let text = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz é中🦀!";
+        for shift in [i32::MIN, i32::MIN + 1, i32::MAX - 1, i32::MAX] {
+            let encrypted = super::caesar_cipher(text, shift);
+            assert_eq!(
+                super::caesar_cipher(&encrypted, -shift.rem_euclid(26)),
+                text
+            );
+        }
+        assert_eq!(super::caesar_cipher("aAzZ", i32::MIN), "cCbB");
     }
 }
