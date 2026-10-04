@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    str::Chars
+};
 
 struct TrieNode{    
     is_final: bool,
@@ -89,6 +92,37 @@ impl TrieNode{
 
         curr.is_final
     }
+
+    fn delete<'a>(
+        &mut self, 
+        mut ch: Chars<'a>
+    ) -> bool{
+        let curr_ch = ch.next();
+
+        if curr_ch.is_none(){ 
+            self.is_final = false;
+            return self.nodes.is_none();
+        }
+
+        let curr_ch = curr_ch.unwrap();
+
+        if let Some(ref mut nodes) = self.nodes{
+            
+            if let Some(next_node) = nodes.get_mut(&curr_ch) {
+                
+                let can_delete = next_node.delete(ch);
+                
+                if can_delete {
+                    nodes.remove(&curr_ch);
+                }
+
+            }
+            false
+        }   
+        else{
+            true
+        }
+    }
 }
 
 impl Trie{
@@ -123,6 +157,19 @@ impl Trie{
             false
         }
     }
+
+    pub fn delete<'a>(
+        &mut self,
+        st: &'a str
+    ){
+        if let Some(mut root) = self.root.take(){
+            if !root.delete(st.chars()) {
+                self.root = Some(root);
+            }
+        }
+    }
+
+
 }
 
 #[macro_export]
@@ -146,7 +193,6 @@ mod trie_tests{
     fn test_insert(){
         
         let trie = trie!("hello","hello world", "good", "good morning");
-
         assert!(
             trie.search("hello") &&
             trie.search("hello world") &&
@@ -155,5 +201,32 @@ mod trie_tests{
         );
         
     }
-}
 
+    #[test]
+    fn test_invalid_insert(){
+        let trie = trie!("hello", "good");
+        assert!(
+            !trie.search("hello world") &&
+            !trie.search("good, ") &&
+            !trie.search("okay")
+        );
+    }
+
+    #[test]
+    fn test_remove(){
+        let mut trie = trie!("he", "helo");
+
+        trie.delete("helo");
+
+        assert!(
+            !trie.search("helo")
+        );
+
+        trie.delete("he");
+
+        assert!(
+            !trie.search("he")
+        );
+
+    }
+}
