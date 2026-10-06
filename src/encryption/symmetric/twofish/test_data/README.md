@@ -33,3 +33,23 @@ The generation recipes are:
 
 The tests read the stored results; running them requires neither C nor network
 access. The Rust implementation never generates its own expected ciphertext.
+
+## Long Monte Carlo validation
+
+`ECB_E_M.TXT` and `ECB_D_M.TXT` are also untouched files from the official KAT
+archive. The two ignored tests each verify all 1,200 published outer cases:
+400 per key size and 10,000 block operations per case. Together they execute
+24 million operations. They also verify the input and key progression from
+the final and penultimate outputs, as specified by `TST2FISH.C`.
+
+Key expansion is reused within each outer case. The ordinary vectors test the
+public functions that expand the key independently for each call. Run the
+complete long suite explicitly with:
+
+```sh
+cargo test --release official_monte_carlo -- --ignored --nocapture
+```
+
+Both long tests must pass before delivery. Ignoring them in the ordinary suite
+keeps routine development checks fast, without reducing their iteration counts
+or modifying their scenarios.

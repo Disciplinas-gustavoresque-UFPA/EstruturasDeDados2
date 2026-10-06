@@ -229,3 +229,81 @@ fn test_documented_examples() {
         ciphertext: decode_block("9F589F5CF6122C32B6BFEC2F2AE8C35A"),
     });
 }
+
+// TST2FISH.C's AES_Test_ECB_E_MCT/AES_Test_ECB_D_MCT: 400 outer cases
+// for each key size, 10,000 chained block operations with each fixed key.
+fn assert_monte_carlo(data: &str, decrypt: bool) {
+    let sections: Vec<_> = data.split("KEYSIZE=").skip(1).collect();
+    assert_eq!(sections.len(), 3);
+    let mut total_cases = 0;
+    for (section, expected_bits) in sections.into_iter().zip([128, 192, 256]) {
+        let bits: usize = section.lines().next().unwrap().trim().parse().unwrap();
+        assert_eq!(bits, expected_bits);
+        let mut key = vec![0; bits / 8];
+        let mut block = [0; 16];
+        let cases: Vec<_> = section.split("\nI=").skip(1).collect();
+        assert_eq!(cases.len(), 400);
+        for (index, case) in cases.into_iter().enumerate() {
+            let published_index: usize = case.lines().next().unwrap().trim().parse().unwrap();
+            assert_eq!(published_index, index);
+            let field = |prefix| {
+                case.lines()
+                    .find_map(|line| line.strip_prefix(prefix))
+                    .unwrap()
+                    .trim()
+            };
+            assert_eq!(decode_hex(field("KEY=")), key, "KEYSIZE={bits}, I={index}");
+            let (input, output) = if decrypt {
+                ("CT=", "PT=")
+            } else {
+                ("PT=", "CT=")
+            };
+            assert_eq!(
+                decode_block(field(input)),
+                block,
+                "KEYSIZE={bits}, I={index}"
+            );
+
+            let state = Twofish::new(&key);
+            let mut previous = block;
+            for _ in 0..10_000 {
+                previous = block;
+                block = if decrypt {
+                    state.decrypt_block(&block)
+                } else {
+                    state.encrypt_block(&block)
+                };
+            }
+            assert_eq!(
+                block,
+                decode_block(field(output)),
+                "KEYSIZE={bits}, I={index}"
+            );
+
+            // For keys longer than a block, prepend the required suffix of
+            // the penultimate output to the final output before XORing the key.
+            let prefix = key.len() - 16;
+            for (key_byte, &byte) in key[..prefix].iter_mut().zip(&previous[16 - prefix..]) {
+                *key_byte ^= byte;
+            }
+            for (key_byte, &byte) in key[prefix..].iter_mut().zip(&block) {
+                *key_byte ^= byte;
+            }
+            total_cases += 1;
+        }
+        eprintln!("official ECB Monte Carlo: decrypt={decrypt}, KEYSIZE={bits}, 400 cases passed");
+    }
+    assert_eq!(total_cases, 1_200);
+}
+
+#[test]
+#[ignore = "long-running official ECB Monte Carlo validation; run in release"]
+fn test_official_monte_carlo_encrypt() {
+    assert_monte_carlo(include_str!("test_data/ECB_E_M.TXT"), false);
+}
+
+#[test]
+#[ignore = "long-running official ECB Monte Carlo validation; run in release"]
+fn test_official_monte_carlo_decrypt() {
+    assert_monte_carlo(include_str!("test_data/ECB_D_M.TXT"), true);
+}
