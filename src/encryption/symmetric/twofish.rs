@@ -69,7 +69,7 @@ impl Twofish {
             s_words: [0; 4],
             word_count,
         };
-        for (index, chunk) in key.chunks_exact(8).enumerate() {
+        for (index, chunk) in key.as_chunks::<8>().0.iter().enumerate() {
             even[index] = u32::from_le_bytes(chunk[..4].try_into().unwrap());
             odd[index] = u32::from_le_bytes(chunk[4..].try_into().unwrap());
             // The S vector lists the Reed–Solomon results in reverse order.
@@ -158,8 +158,8 @@ fn read_words(block: &[u8; 16]) -> [u32; 4] {
 
 fn write_words(words: [u32; 4]) -> [u8; 16] {
     let mut output = [0; 16];
-    for (chunk, word) in output.chunks_exact_mut(4).zip(words) {
-        chunk.copy_from_slice(&word.to_le_bytes());
+    for (chunk, word) in output.as_chunks_mut::<4>().0.iter_mut().zip(words) {
+        *chunk = word.to_le_bytes();
     }
     output
 }

@@ -33,14 +33,19 @@ call overhead. RC4 includes lowercase hexadecimal encoding in its timings.
 
 Six additional Blowfish cases encrypt and decrypt one eight-byte binary block
 with 4-, 16-, and 56-byte keys. Each call includes the full key expansion;
-decryption ciphertext is prepared outside the timed region. There are 54 cases
-in total. Blowfish processes raw blocks without padding or hexadecimal encoding.
+decryption ciphertext is prepared outside the timed region.
+
+Six Twofish cases encrypt and decrypt one 16-byte binary block with 16-, 24-,
+and 32-byte keys. Each call also includes the full key expansion, with the
+decryption ciphertext prepared outside the timed region. There are 60 cases in
+total. Blowfish and Twofish process raw blocks without padding or hexadecimal
+encoding.
 
 Input generation and Vigenère decryption setup occur outside timed regions.
 Text, XOR, and RC4 calls include key processing, output allocation, and output
-destruction. Blowfish builds its key schedule and returns a fixed-size array
-without heap allocation. `std::hint::black_box` prevents input-dependent
-optimization.
+destruction. Blowfish and Twofish build their key schedules and return
+fixed-size arrays without heap allocation. `std::hint::black_box` prevents
+input-dependent optimization.
 
 Use the same machine, toolchain, build flags, and benchmark settings for both
 runs, with other workloads idle. Short runs are indicative; repeat the default

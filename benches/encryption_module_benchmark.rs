@@ -74,5 +74,33 @@ fn blowfish_blocks(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, text_ciphers, byte_ciphers, blowfish_blocks);
+fn twofish_blocks(c: &mut Criterion) {
+    let mut group = c.benchmark_group("twofish");
+    let block = std::array::from_fn(|index| (index as u8) * 17);
+    group.throughput(Throughput::Bytes(block.len() as u64));
+
+    for key_len in [16, 24, 32] {
+        let key: Vec<u8> = (0x80..).take(key_len).collect();
+        let encrypted = encryption::twofish_encrypt(&block, &key);
+        group.bench_with_input(BenchmarkId::new("encrypt", key_len), &block, |b, block| {
+            b.iter(|| encryption::twofish_encrypt(black_box(block), black_box(&key)));
+        });
+        group.bench_with_input(
+            BenchmarkId::new("decrypt", key_len),
+            &encrypted,
+            |b, block| {
+                b.iter(|| encryption::twofish_decrypt(black_box(block), black_box(&key)));
+            },
+        );
+    }
+    group.finish();
+}
+
+criterion_group!(
+    benches,
+    text_ciphers,
+    byte_ciphers,
+    blowfish_blocks,
+    twofish_blocks
+);
 criterion_main!(benches);
