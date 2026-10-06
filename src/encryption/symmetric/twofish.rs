@@ -263,4 +263,5 @@ fn h(input: u32, key_words: &[u32]) -> u32 {
 // Criterion imports cfg(test) modules but supplies its own main, so test-only
 // fixtures and helpers are not referenced by the benchmark executable.
 #[allow(dead_code)]
+#[path = "../tests/twofish/mod.rs"]
 mod tests;
