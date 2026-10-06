@@ -1,0 +1,3 @@
+# Preserve the designers' CRLF line endings and final blank lines verbatim.
+*.TXT -text whitespace=cr-at-eol,-blank-at-eof
+README -text whitespace=cr-at-eol

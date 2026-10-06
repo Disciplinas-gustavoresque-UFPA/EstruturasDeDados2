@@ -1,0 +1,27 @@
+           Test Values: Known Answer Tests and Monte Carlo Tests Diskette
+
+
+Files on this diskette:
+
+File Name           Description
+========================================================================
+
+README          This file
+
+ECB_VK.TXT      Variable key known (ECB mode) answer test file
+
+ECB_VT.TXT      Variable plaintext (ECB mode) known answer test file
+
+ECB_TBL.TXT     Tables (ECB mode) known answer test file
+
+ECB_IVAL.TXT    Intermediate values test file
+
+ECB_E_M.TXT     ECB Encrypt Monte Carlo Test file
+
+ECB_D_M.TXT     ECB Decrypt Monte Carlo Test file
+
+CBC_E_M.TXT     CBC Encrypt Monte Carlo Test file
+
+CBC_D_M.TXT     CBC Decrypt Monte Carlo Test file
+
+========================================================================
