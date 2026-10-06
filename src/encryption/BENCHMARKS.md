@@ -25,15 +25,22 @@ between runs. For a shorter exploratory run, append:
 --warm-up-time 0.1 --measurement-time 0.25 --sample-size 20
 ```
 
-The 48 cases cover empty, small, and larger inputs; ASCII and mixed Unicode
-text; Caesar; Vigenère encryption/decryption; and XOR/RC4 with 1-, 16-, and
+The original 48 cases cover empty, small, and larger inputs; ASCII and mixed
+Unicode text; Caesar; Vigenère encryption/decryption; and XOR/RC4 with 1-, 16-, and
 256-byte keys. Byte inputs span all byte values. IDs identify input byte counts
 and key lengths. Throughput measures input bytes; empty-input cases measure
 call overhead. RC4 includes lowercase hexadecimal encoding in its timings.
 
+Six additional Blowfish cases encrypt and decrypt one eight-byte binary block
+with 4-, 16-, and 56-byte keys. Each call includes the full key expansion;
+decryption ciphertext is prepared outside the timed region. There are 54 cases
+in total. Blowfish processes raw blocks without padding or hexadecimal encoding.
+
 Input generation and Vigenère decryption setup occur outside timed regions.
-Each measured call includes key processing, output allocation, and output
-destruction. `std::hint::black_box` prevents input-dependent optimization.
+Text, XOR, and RC4 calls include key processing, output allocation, and output
+destruction. Blowfish builds its key schedule and returns a fixed-size array
+without heap allocation. `std::hint::black_box` prevents input-dependent
+optimization.
 
 Use the same machine, toolchain, build flags, and benchmark settings for both
 runs, with other workloads idle. Short runs are indicative; repeat the default

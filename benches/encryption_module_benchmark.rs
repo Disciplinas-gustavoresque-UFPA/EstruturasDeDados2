@@ -52,5 +52,27 @@ fn byte_ciphers(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, text_ciphers, byte_ciphers);
+fn blowfish_blocks(c: &mut Criterion) {
+    let mut group = c.benchmark_group("blowfish");
+    let block = [0x00, 0x01, 0x7f, 0x80, 0xfe, 0xff, 0xaa, 0x55];
+    group.throughput(Throughput::Bytes(block.len() as u64));
+
+    for key_len in [4, 16, 56] {
+        let key: Vec<u8> = (0x80..).take(key_len).collect();
+        let encrypted = encryption::blowfish_encrypt(&block, &key);
+        group.bench_with_input(BenchmarkId::new("encrypt", key_len), &block, |b, block| {
+            b.iter(|| encryption::blowfish_encrypt(black_box(block), black_box(&key)));
+        });
+        group.bench_with_input(
+            BenchmarkId::new("decrypt", key_len),
+            &encrypted,
+            |b, block| {
+                b.iter(|| encryption::blowfish_decrypt(black_box(block), black_box(&key)));
+            },
+        );
+    }
+    group.finish();
+}
+
+criterion_group!(benches, text_ciphers, byte_ciphers, blowfish_blocks);
 criterion_main!(benches);
