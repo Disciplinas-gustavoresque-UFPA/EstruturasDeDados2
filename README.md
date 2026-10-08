@@ -167,32 +167,20 @@ cd EstruturasDeDados2
 Este projeto está licenciado sob a **Apache License 2.0**. Consulte o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 
-## 🚀 Contribuição do Aluno: Charles C. A. Lima
+## 🚀 Contribuição (Pós-Graduação): Charles C. A. Lima
 
-Este bloco documenta a biblioteca de alta performance em Rust desenvolvida por **Charles Cristiano de Assis Lima** para a disciplina de **Projeto e Análise de Algoritmos** (Doutorado/UFPA). O foco desta implementação é explorar a complexidade algorítmica de estruturas de dados avançadas, priorizando a segurança de memória e a velocidade de execução da linguagem.
+Este bloco documenta a infraestrutura, governança e os módulos de análise de dados desenvolvidos por **Charles Cristiano de Assis Lima** para a disciplina de **Projeto e Análise de Algoritmos** (Doutorado/UFPA). O escopo desta contribuição foca em gerenciar o repositório, estabelecer os padrões de engenharia e criar as ferramentas de avaliação empírica para as estruturas de dados desenvolvidas pela turma de graduação.
 
-### 🏗️ Estrutura do Código Desenvolvido
+### 🏗️ Arquitetura e Módulos Gerenciados
 
-A base de código está modularizada nos seguintes domínios:
+#### 1. KD-Tree (`src/searching/kd_tree`)
+*Padrão Ouro / Template de Referência.* Implementação de uma Árvore K-Dimensional de alta performance para busca espacial exata (Nearest Neighbor). Este módulo serve como modelo arquitetural, demonstrando aos alunos de graduação o padrão exigido de documentação, segurança de memória em Rust e testes unitários.
 
-#### 1. Busca Espacial (`src/searching`)
-Focado na recuperação eficiente de dados multidimensionais e no particionamento espacial.
-* **KD-Tree (`kd_tree`)**: Implementa uma Árvore K-Dimensional para organizar pontos em um espaço k-dimensional. Conta com um algoritmo de busca exata pelo Vizinho Mais Próximo (*Nearest Neighbor*), otimizado para consultas de coordenadas 3D.
-* **Análise de Desempenho**: Inclui testes de *benchmark* rigorosos utilizando o crate `criterion` para validar empiricamente as complexidades de tempo esperadas em grandes distribuições aleatórias.
+#### 2. Governança e Qualidade de Código (CI/CD)
+*Em desenvolvimento.* Implementação de pipelines automatizados via GitHub Actions para blindar a branch `main`. Todo código submetido pela graduação será validado automaticamente quanto à formatação (`cargo fmt`), segurança (`cargo clippy`) e integridade (`cargo test`) antes da revisão humana.
 
-#### 2. Algoritmos de Ordenação (`src/sorting`)
-*Em desenvolvimento.* Módulo dedicado à implementação e avaliação de metodologias de ordenação (*sorting*), comparando as complexidades assintóticas de tempo e espaço sob diferentes estados de memória.
+#### 3. Módulo de Análise de Dados e Benchmarking
+*Em desenvolvimento.* Suíte de testes de estresse baseada no crate `criterion` para avaliar as implementações da graduação. O objetivo é automatizar a extração de métricas de tempo/espaço, exportar logs consolidados e gerar visualizações gráficas da complexidade assintótica (Notação Big-O) do comportamento prático dos algoritmos sob diferentes distribuições de carga.
 
-#### 3. Criptografia (`src/encryption`)
-*Em desenvolvimento.* Explora a implementação de algoritmos criptográficos básicos, com foco em medir o custo computacional (*overhead*) e a eficiência das técnicas de transformação de dados.
-
-### ⚙️ Como Executar os Módulos Desta Contribuição
-
-```bash
-# Verifica se o código da contribuição compila com sucesso
-cargo check
-
-# Executa os benchmarks do criterion para avaliar o tempo real de busca na KD-Tree
-cargo bench
-
-📌 Nota: Aqui encerra-se o escopo da documentação referente ao projeto e aos módulos desenvolvidos por Charles C. A. Lima.
+---
+> 📌 **Nota:** A avaliação dos *Pull Requests* e a auditoria da complexidade dos algoritmos submetidos pela graduação são de responsabilidade desta contribuição.
