@@ -92,9 +92,7 @@ impl KdTree {
 
     /// Finds the nearest neighbor to a given target point.
     pub fn nearest(&self, target: &Point) -> Option<Point> {
-        if self.root.is_none() {
-            return None;
-        }
+        self.root?;
 
         let mut best_idx = self.root.unwrap();
         let mut best_dist = f64::MAX;
@@ -138,10 +136,10 @@ impl KdTree {
 
         let axis_dist = (target.coordinates[axis] - current_point.coordinates[axis]).powi(2);
 
-        if axis_dist < *best_dist {
-            if let Some(next_idx) = second_branch {
-                self.nearest_recursive(next_idx, target, depth + 1, best_idx, best_dist);
-            }
+        if axis_dist < *best_dist
+            && let Some(next_idx) = second_branch
+        {
+            self.nearest_recursive(next_idx, target, depth + 1, best_idx, best_dist);
         }
     }
 }

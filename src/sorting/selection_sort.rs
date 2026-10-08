@@ -10,7 +10,6 @@ pub fn selection_sort<T: Ord + Copy>(elements: &mut [T]) {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::selection_sort;
