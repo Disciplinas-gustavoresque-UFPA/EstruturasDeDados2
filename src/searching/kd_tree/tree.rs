@@ -8,7 +8,8 @@ impl Point {
     /// Calculates the squared Euclidean distance between two points.
     /// Omitting the square root (sqrt) massively optimizes performance during the search.
     pub fn squared_distance(&self, other: &Point) -> f64 {
-        self.coordinates.iter()
+        self.coordinates
+            .iter()
             .zip(other.coordinates.iter())
             .map(|(a, b)| (a - b).powi(2))
             .sum()
@@ -124,7 +125,7 @@ impl KdTree {
         }
 
         let go_left = target.coordinates[axis] < current_point.coordinates[axis];
-        
+
         let (first_branch, second_branch) = if go_left {
             (current_node.left, current_node.right)
         } else {
@@ -136,7 +137,7 @@ impl KdTree {
         }
 
         let axis_dist = (target.coordinates[axis] - current_point.coordinates[axis]).powi(2);
-        
+
         if axis_dist < *best_dist {
             if let Some(next_idx) = second_branch {
                 self.nearest_recursive(next_idx, target, depth + 1, best_idx, best_dist);
@@ -153,18 +154,28 @@ mod tests {
     fn test_kdtree_insertion() {
         let mut tree = KdTree::new(2);
 
-        tree.insert(Point { coordinates: vec![3.0, 6.0] });
-        tree.insert(Point { coordinates: vec![17.0, 15.0] });
-        tree.insert(Point { coordinates: vec![13.0, 15.0] });
-        tree.insert(Point { coordinates: vec![6.0, 12.0] });
-        tree.insert(Point { coordinates: vec![9.0, 1.0] });
+        tree.insert(Point {
+            coordinates: vec![3.0, 6.0],
+        });
+        tree.insert(Point {
+            coordinates: vec![17.0, 15.0],
+        });
+        tree.insert(Point {
+            coordinates: vec![13.0, 15.0],
+        });
+        tree.insert(Point {
+            coordinates: vec![6.0, 12.0],
+        });
+        tree.insert(Point {
+            coordinates: vec![9.0, 1.0],
+        });
 
         assert_eq!(tree.size(), 5);
 
         let root_idx = tree.root.unwrap();
         let root_node = &tree.arena[root_idx];
         assert_eq!(root_node.point.coordinates, vec![3.0, 6.0]);
-        
+
         assert!(root_node.right.is_some());
         let right_child = &tree.arena[root_node.right.unwrap()];
         assert_eq!(right_child.point.coordinates, vec![17.0, 15.0]);
@@ -173,25 +184,37 @@ mod tests {
     #[test]
     fn test_nearest_neighbor_search() {
         let mut tree = KdTree::new(2);
-        
+
         let points = vec![
-            vec![2.0, 3.0], vec![5.0, 4.0], vec![9.0, 6.0],
-            vec![4.0, 7.0], vec![8.0, 1.0], vec![7.0, 2.0],
+            vec![2.0, 3.0],
+            vec![5.0, 4.0],
+            vec![9.0, 6.0],
+            vec![4.0, 7.0],
+            vec![8.0, 1.0],
+            vec![7.0, 2.0],
         ];
 
         for coords in points {
-            tree.insert(Point { coordinates: coords });
+            tree.insert(Point {
+                coordinates: coords,
+            });
         }
 
-        let target_exact = Point { coordinates: vec![9.0, 6.0] };
+        let target_exact = Point {
+            coordinates: vec![9.0, 6.0],
+        };
         let nearest_exact = tree.nearest(&target_exact).unwrap();
         assert_eq!(nearest_exact.coordinates, vec![9.0, 6.0]);
 
-        let target_close = Point { coordinates: vec![9.0, 2.0] };
+        let target_close = Point {
+            coordinates: vec![9.0, 2.0],
+        };
         let nearest_close = tree.nearest(&target_close).unwrap();
         assert_eq!(nearest_close.coordinates, vec![8.0, 1.0]);
 
-        let target_boundary = Point { coordinates: vec![3.0, 4.5] };
+        let target_boundary = Point {
+            coordinates: vec![3.0, 4.5],
+        };
         let nearest_boundary = tree.nearest(&target_boundary).unwrap();
         assert_eq!(nearest_boundary.coordinates, vec![2.0, 3.0]);
     }
