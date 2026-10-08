@@ -165,3 +165,34 @@ cd EstruturasDeDados2
 ## Licença
 
 Este projeto está licenciado sob a **Apache License 2.0**. Consulte o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+
+## 🚀 Contribuição do Aluno: Charles C. A. Lima
+
+Este bloco documenta a biblioteca de alta performance em Rust desenvolvida por **Charles Cristiano de Assis Lima** para a disciplina de **Projeto e Análise de Algoritmos** (Doutorado/UFPA). O foco desta implementação é explorar a complexidade algorítmica de estruturas de dados avançadas, priorizando a segurança de memória e a velocidade de execução da linguagem.
+
+### 🏗️ Estrutura do Código Desenvolvido
+
+A base de código está modularizada nos seguintes domínios:
+
+#### 1. Busca Espacial (`src/searching`)
+Focado na recuperação eficiente de dados multidimensionais e no particionamento espacial.
+* **KD-Tree (`kd_tree`)**: Implementa uma Árvore K-Dimensional para organizar pontos em um espaço k-dimensional. Conta com um algoritmo de busca exata pelo Vizinho Mais Próximo (*Nearest Neighbor*), otimizado para consultas de coordenadas 3D.
+* **Análise de Desempenho**: Inclui testes de *benchmark* rigorosos utilizando o crate `criterion` para validar empiricamente as complexidades de tempo esperadas em grandes distribuições aleatórias.
+
+#### 2. Algoritmos de Ordenação (`src/sorting`)
+*Em desenvolvimento.* Módulo dedicado à implementação e avaliação de metodologias de ordenação (*sorting*), comparando as complexidades assintóticas de tempo e espaço sob diferentes estados de memória.
+
+#### 3. Criptografia (`src/encryption`)
+*Em desenvolvimento.* Explora a implementação de algoritmos criptográficos básicos, com foco em medir o custo computacional (*overhead*) e a eficiência das técnicas de transformação de dados.
+
+### ⚙️ Como Executar os Módulos Desta Contribuição
+
+```bash
+# Verifica se o código da contribuição compila com sucesso
+cargo check
+
+# Executa os benchmarks do criterion para avaliar o tempo real de busca na KD-Tree
+cargo bench
+
+📌 Nota: Aqui encerra-se o escopo da documentação referente ao projeto e aos módulos desenvolvidos por Charles C. A. Lima.
