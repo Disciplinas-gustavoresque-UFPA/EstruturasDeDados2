@@ -19,4 +19,4 @@ Todo o código submetido será avaliado automaticamente pelo pipeline de CI/CD d
 O processo de integração de código (*merge*) na `main` é auditado e gerenciado pelos alunos da pós-graduação. Para que seu PR seja avaliado e aprovado:
 1. **Cobertura de Testes:** A estrutura ou algoritmo deve possuir testes unitários demonstrando o seu funcionamento no melhor caso e no pior caso.
 2. **Resolução de Conflitos:** O PR deve estar atualizado (*rebased*) com a branch `main` e completamente livre de conflitos.
-3. **Revisão de Código (Code Review):** O PR será bloqueado até receber a aprovação formal de um revisor líder (pós-graduação), que auditará a complexidade assintótica de tempo/espaço implementada e as boas práticas da linguagem.
+3. **Revisão de Código (Code Review):** O PR será bloqueado pelo GitHub até receber pelo menos 4 aprovações formais de pessoal autorizado. Durante este processo, os revisores da pós-graduação auditarão a complexidade assintótica de tempo/espaço implementada e a adesão às boas práticas da linguagem Rust.
