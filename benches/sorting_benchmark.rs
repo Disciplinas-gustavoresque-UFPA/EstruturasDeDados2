@@ -1,8 +1,6 @@
 use criterion::{BatchSize, Criterion, black_box, criterion_group, criterion_main};
 // Importa a nossa fábrica de dados do módulo utils
-use estruturas_de_dados_2::utils::{
-    generate_random_vector, generate_reversed_vector,
-};
+use estruturas_de_dados_2::utils::{generate_random_vector, generate_reversed_vector};
 
 pub fn bench_sorting(c: &mut Criterion) {
     let mut group = c.benchmark_group("Analise de Complexidade - Algoritmos de Ordenacao");
