@@ -6,6 +6,7 @@ authors = ["Charles C. A. Lima <limacca1978>"]
 description = "Biblioteca de algoritmos e estruturas de dados em Rust"
 
 [dependencies]
+rand = "0.8"
 # Dependências do código de produção
 
 [dev-dependencies]
@@ -14,4 +15,8 @@ rand = "0.8"
 
 [[bench]]
 name = "kdtree_benchmark"
+harness = false
+
+[[bench]]
+name = "sorting_benchmark"
 harness = false
