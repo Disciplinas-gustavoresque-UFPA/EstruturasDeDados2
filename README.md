@@ -165,3 +165,22 @@ cd EstruturasDeDados2
 ## Licença
 
 Este projeto está licenciado sob a **Apache License 2.0**. Consulte o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+
+## 🚀 Contribuição (Pós-Graduação): Charles C. A. Lima
+
+Este bloco documenta a infraestrutura, governança e os módulos de análise de dados desenvolvidos por **Charles Cristiano de Assis Lima** para a disciplina de **Projeto e Análise de Algoritmos** (Doutorado/UFPA). O escopo desta contribuição foca em gerenciar o repositório, estabelecer os padrões de engenharia e criar as ferramentas de avaliação empírica para as estruturas de dados desenvolvidas pela turma de graduação.
+
+### 🏗️ Arquitetura e Módulos Gerenciados
+
+#### 1. KD-Tree (`src/searching/kd_tree`)
+*Padrão Ouro / Template de Referência.* Implementação de uma Árvore K-Dimensional de alta performance para busca espacial exata (Nearest Neighbor). Este módulo serve como modelo arquitetural, demonstrando aos alunos de graduação o padrão exigido de documentação, segurança de memória em Rust e testes unitários.
+
+#### 2. Governança e Qualidade de Código (CI/CD)
+*Em desenvolvimento.* Implementação de pipelines automatizados via GitHub Actions para blindar a branch `main`. Todo código submetido pela graduação será validado automaticamente quanto à formatação (`cargo fmt`), segurança (`cargo clippy`) e integridade (`cargo test`) antes da revisão humana.
+
+#### 3. Módulo de Análise de Dados e Benchmarking
+*Em desenvolvimento.* Suíte de testes de estresse baseada no crate `criterion` para avaliar as implementações da graduação. O objetivo é automatizar a extração de métricas de tempo/espaço, exportar logs consolidados e gerar visualizações gráficas da complexidade assintótica (Notação Big-O) do comportamento prático dos algoritmos sob diferentes distribuições de carga.
+
+---
+> 📌 **Nota:** A avaliação dos *Pull Requests* e a auditoria da complexidade dos algoritmos submetidos pela graduação são de responsabilidade desta contribuição.
