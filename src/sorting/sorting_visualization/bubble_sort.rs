@@ -56,3 +56,41 @@ mod tests {
         assert_eq!(values, [1, 1, 2, 2, 3, 4, 4]);
     }
 }
+
+pub(super) fn bubble_sort_with_trace(
+    elements: &mut [i32],
+    steps: &mut Vec<super::SortStep>,
+) {
+    let n = elements.len();
+
+    for i in 0..n {
+        let mut swapped = false;
+
+        for j in 0..n.saturating_sub(i + 1) {
+            super::record(
+                elements,
+                &[j, j + 1],
+                &[],
+                "Comparando elementos",
+                steps,
+            );
+
+            if elements[j] > elements[j + 1] {
+                elements.swap(j, j + 1);
+                swapped = true;
+
+                super::record(
+                    elements,
+                    &[],
+                    &[j, j + 1],
+                    "Troca realizada",
+                    steps,
+                );
+            }
+        }
+
+        if !swapped {
+            break;
+        }
+    }
+}

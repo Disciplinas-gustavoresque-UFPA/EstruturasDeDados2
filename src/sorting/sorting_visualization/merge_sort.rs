@@ -114,3 +114,82 @@ mod tests {
         assert_eq!(values, ['a', 'b', 'c', 'd']);
     }
 }
+
+pub(super) fn merge_sort_with_trace(
+    elements: &mut [i32],
+    steps: &mut Vec<super::SortStep>,
+) {
+    if elements.len() <= 1 {
+        return;
+    }
+
+    let middle = elements.len() / 2;
+
+    merge_sort_with_trace(&mut elements[..middle], steps);
+    merge_sort_with_trace(&mut elements[middle..], steps);
+
+    let left = elements[..middle].to_vec();
+    let right = elements[middle..].to_vec();
+
+    let mut left_index = 0;
+    let mut right_index = 0;
+    let mut elements_index = 0;
+
+    while left_index < left.len() && right_index < right.len() {
+        super::record(
+            elements,
+            &[elements_index],
+            &[],
+            "Comparando elementos das metades",
+            steps,
+        );
+
+        if left[left_index] <= right[right_index] {
+            elements[elements_index] = left[left_index];
+            left_index += 1;
+        } else {
+            elements[elements_index] = right[right_index];
+            right_index += 1;
+        }
+
+        super::record(
+            elements,
+            &[elements_index],
+            &[elements_index],
+            "Elemento copiado para a posição atual",
+            steps,
+        );
+
+        elements_index += 1;
+    }
+
+    while left_index < left.len() {
+        elements[elements_index] = left[left_index];
+
+        super::record(
+            elements,
+            &[],
+            &[elements_index],
+            "Copiando elemento restante da metade esquerda",
+            steps,
+        );
+
+        left_index += 1;
+        elements_index += 1;
+    }
+
+    while right_index < right.len() {
+        elements[elements_index] = right[right_index];
+
+        super::record(
+            elements,
+            &[],
+            &[elements_index],
+            "Copiando elemento restante da metade direita",
+            steps,
+        );
+
+        right_index += 1;
+        elements_index += 1;
+    }
+}

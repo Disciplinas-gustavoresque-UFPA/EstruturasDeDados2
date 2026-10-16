@@ -115,3 +115,118 @@ mod tests {
         assert_eq!(values, ['a', 'b', 'c', 'd']);
     }
 }
+
+pub(super) fn quick_sort_with_trace(
+    elements: &mut [i32],
+    steps: &mut Vec<super::SortStep>,
+    depth: usize,
+) -> Result<(), String> {
+    if elements.len() <= 1 {
+        return Ok(());
+    }
+
+    if depth >= 32 {
+        super::record(
+            elements,
+            &[],
+            &[],
+            "Limite de recursão atingido; demonstração interrompida",
+            steps,
+        );
+
+        return Err(
+            "O Quick Sort atingiu o limite de recursão da demonstração."
+                .to_string(),
+        );
+    }
+
+    let pivot_index = partition_with_trace(elements, steps)?;
+
+    let (left, right) = elements.split_at_mut(pivot_index + 1);
+
+    quick_sort_with_trace(left, steps, depth + 1)?;
+    quick_sort_with_trace(right, steps, depth + 1)?;
+
+    Ok(())
+}
+
+fn partition_with_trace(
+    elements: &mut [i32],
+    steps: &mut Vec<super::SortStep>,
+) -> Result<usize, String> {
+    let mut left = 0;
+    let mut right = elements.len() - 1;
+    let pivot_index = elements.len() / 2;
+    let max_iterations = elements.len().saturating_mul(4).saturating_add(4);
+    let mut iterations = 0;
+
+    loop {
+        iterations += 1;
+
+        if iterations > max_iterations {
+            super::record(
+                elements,
+                &[],
+                &[],
+                "Particionamento excedeu o limite da demonstração",
+                steps,
+            );
+
+            return Err("O particionamento não progrediu como esperado.".to_string());
+        }
+
+        while left < elements.len()
+            && elements[left] < elements[pivot_index]
+        {
+            left += 1;
+        }
+
+        if left >= elements.len() {
+            return Err(
+                "O índice esquerdo ultrapassou os limites da lista."
+                    .to_string(),
+            );
+        }
+
+        while elements[right] > elements[pivot_index] {
+            if right == 0 {
+                return Err(
+                    "O índice direito atingiu o limite da lista."
+                        .to_string(),
+                );
+            }
+
+            right -= 1;
+        }
+
+        super::record(
+            elements,
+            &[left, right, pivot_index],
+            &[],
+            "Comparando elementos com o pivô",
+            steps,
+        );
+
+        if left >= right {
+            return Ok(right);
+        }
+
+        elements.swap(left, right);
+
+        super::record(
+            elements,
+            &[pivot_index],
+            &[left, right],
+            "Troca durante o particionamento",
+            steps,
+        );
+
+        left += 1;
+
+        if right == 0 {
+            return Ok(0);
+        }
+
+        right -= 1;
+    }
+}
