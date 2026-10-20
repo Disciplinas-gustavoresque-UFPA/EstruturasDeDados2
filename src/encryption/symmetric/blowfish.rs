@@ -105,6 +105,10 @@ impl Blowfish {
 }
 
 #[cfg(test)]
+#[path = "blowfish_tests.rs"]
+mod validation;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
