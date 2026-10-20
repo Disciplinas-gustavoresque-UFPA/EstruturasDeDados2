@@ -42,10 +42,9 @@ impl Twofish {
         let mut even = [0u32; 4];
         let mut odd = [0u32; 4];
         let mut s_words = [0; 4];
-        for (index, part) in key.chunks_exact(8).enumerate() {
+        for (index, part) in key.as_chunks::<8>().0.iter().enumerate() {
             even[index] = u32::from_le_bytes(part[..4].try_into().unwrap());
             odd[index] = u32::from_le_bytes(part[4..].try_into().unwrap());
-            let part: &[u8; 8] = part.try_into().unwrap();
             // A especificação armazena as palavras S em ordem inversa.
             s_words[key_parts - 1 - index] = u32::from_le_bytes(matrix_product(&RS, part, 0x14d));
         }
@@ -77,7 +76,7 @@ impl Twofish {
             state.swap(1, 3);
         }
         let mut output = [0; 16];
-        for (index, word) in output.chunks_exact_mut(4).enumerate() {
+        for (index, word) in output.as_chunks_mut::<4>().0.iter_mut().enumerate() {
             word.copy_from_slice(&(state[(index + 2) % 4] ^ self.subkeys[index + 4]).to_le_bytes());
         }
         output
@@ -86,9 +85,8 @@ impl Twofish {
     /// Inverte whitening, trocas de metades, rotações e rodadas.
     pub fn decrypt_block(&self, block: &[u8; 16]) -> [u8; 16] {
         let mut state = [0; 4];
-        for (index, word) in block.chunks_exact(4).enumerate() {
-            state[(index + 2) % 4] =
-                u32::from_le_bytes(word.try_into().unwrap()) ^ self.subkeys[index + 4];
+        for (index, word) in block.as_chunks::<4>().0.iter().enumerate() {
+            state[(index + 2) % 4] = u32::from_le_bytes(*word) ^ self.subkeys[index + 4];
         }
         for round in (0..16).rev() {
             state.swap(0, 2);
@@ -98,7 +96,7 @@ impl Twofish {
             state[3] = (state[3] ^ second).rotate_right(1);
         }
         let mut output = [0; 16];
-        for (index, word) in output.chunks_exact_mut(4).enumerate() {
+        for (index, word) in output.as_chunks_mut::<4>().0.iter_mut().enumerate() {
             word.copy_from_slice(&(state[index] ^ self.subkeys[index]).to_le_bytes());
         }
         output
@@ -187,6 +185,10 @@ fn multiply(left: u8, mut right: u8, polynomial: u16) -> u8 {
     }
     product as u8
 }
+
+#[cfg(test)]
+#[path = "twofish_tests.rs"]
+mod validation;
 
 #[cfg(test)]
 mod tests {
