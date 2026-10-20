@@ -98,6 +98,10 @@ fn feistel(right: u32, subkey: u64) -> u32 {
 }
 
 #[cfg(test)]
+#[path = "des_tests.rs"]
+mod validation;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
