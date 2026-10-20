@@ -1,5 +1,4 @@
 pub fn min<T: Ord + Copy>(elements: &[T]) -> Option<T> {
-
     let mut min_element: Option<&T> = elements.first();
 
     for num in elements.iter().skip(1) {
@@ -7,7 +6,7 @@ pub fn min<T: Ord + Copy>(elements: &[T]) -> Option<T> {
             min_element = Some(num);
         }
     }
-    return min_element.copied();
+    min_element.copied()
 }
 
 #[cfg(test)]

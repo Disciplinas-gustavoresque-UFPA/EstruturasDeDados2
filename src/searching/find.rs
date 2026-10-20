@@ -4,7 +4,7 @@ pub fn find<T: Eq>(elements: &[T], target: &T) -> Option<usize> {
             return Some(idx);
         }
     }
-    return None;
+    None
 }
 
 #[cfg(test)]
