@@ -39,7 +39,7 @@ impl Aes {
         let nk = key.len() / 4;
         let rounds = nk + 6;
         let mut words = [[0; 4]; 60];
-        for (word, chunk) in words.iter_mut().zip(key.chunks_exact(4)) {
+        for (word, chunk) in words.iter_mut().zip(key.as_chunks::<4>().0) {
             word.copy_from_slice(chunk);
         }
         let mut rcon = 1;
@@ -57,7 +57,7 @@ impl Aes {
         }
         let mut round_keys = [[0; 16]; 15];
         for (round, round_key) in round_keys.iter_mut().take(rounds + 1).enumerate() {
-            for (column, output) in round_key.chunks_exact_mut(4).enumerate() {
+            for (column, output) in round_key.as_chunks_mut::<4>().0.iter_mut().enumerate() {
                 output.copy_from_slice(&words[4 * round + column]);
             }
         }
@@ -124,8 +124,8 @@ fn mix_columns(state: &mut [u8; 16], inverse: bool) {
     } else {
         [[2, 3, 1, 1], [1, 2, 3, 1], [1, 1, 2, 3], [3, 1, 1, 2]]
     };
-    for column in state.chunks_exact_mut(4) {
-        let previous: [u8; 4] = column.try_into().unwrap();
+    for column in state.as_chunks_mut::<4>().0.iter_mut() {
+        let previous = *column;
         for (output, row) in column.iter_mut().zip(matrix) {
             *output = row
                 .into_iter()
@@ -185,6 +185,10 @@ const fn invert_sbox() -> [u8; 256] {
     }
     inverse
 }
+
+#[cfg(test)]
+#[path = "aes_tests.rs"]
+mod validation;
 
 #[cfg(test)]
 mod tests {
