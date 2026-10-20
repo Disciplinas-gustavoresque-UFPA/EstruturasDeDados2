@@ -25,7 +25,7 @@ use super::helpers::is_valid;
 /// Por que não usar as funções `max` e `min` do módulo `searching`? Elas só
 /// aceitam tipos com "ordem total" (`Ord`), que o `f64` não tem. Daria para
 /// usá-las com o mesmo "embrulho" que a ordenação usa (veja `helpers.rs`), mas
-/// isso exigiria copiar a lista inteira (espaço O(n)). O laço abaixo faz o
+/// isso exigiria copiar a lista inteira (espaço O(n)). O `fold` abaixo faz o
 /// mesmo trabalho guardando só dois números (espaço O(1)).
 ///
 /// # Quando a resposta é `None`
@@ -44,21 +44,14 @@ pub fn range(data: &[f64]) -> Option<f64> {
         return None;
     }
 
-    // Passo 2: começar com o primeiro valor como menor e como maior.
-    let mut smallest = data[0];
-    let mut largest = data[0];
+    // Passo 2: numa única passada, guardar o menor e o maior valor.
+    // `fold` começa com o par (primeiro valor, primeiro valor) e, a cada
+    // valor da lista, devolve o par atualizado.
+    let (smallest, largest) = data.iter().fold((data[0], data[0]), |(lo, hi), &value| {
+        (lo.min(value), hi.max(value))
+    });
 
-    // Passo 3: percorrer o resto da lista, atualizando o menor e o maior.
-    for &value in &data[1..] {
-        if value < smallest {
-            smallest = value;
-        }
-        if value > largest {
-            largest = value;
-        }
-    }
-
-    // Passo 4: a amplitude é a distância entre os dois.
+    // Passo 3: a amplitude é a distância entre os dois.
     Some(largest - smallest)
 }
 

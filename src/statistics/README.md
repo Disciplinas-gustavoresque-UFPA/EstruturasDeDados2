@@ -6,7 +6,7 @@ Cada medida tem a sua própria função, num arquivo próprio desta pasta. A fun
 
 O código foi escrito para ser **lido e estudado**. Cada função tem uma explicação com a fórmula, um exemplo feito passo a passo, os casos em que não há resposta e a análise de complexidade.
 
-**Tudo foi implementado à mão.** O módulo não usa nenhum pacote externo (o `Cargo.toml` não tem dependências), e as fórmulas e os laços estão escritos por extenso. Para ordenar, ele usa o `merge_sort` da própria biblioteca (`src/sorting/merge_sort.rs`). Da linguagem, usa só o básico (listas `Vec`, texto e impressão) e as operações do processador (soma, subtração, multiplicação, divisão, comparações e raiz quadrada). Nenhum algoritmo vem pronto.
+**Os algoritmos foram implementados à mão.** O módulo não usa nenhum pacote externo (o `Cargo.toml` não tem dependências). Para ordenar, ele usa o `merge_sort` da própria biblioteca (`src/sorting/merge_sort.rs`). Para achar a mediana e os quantis **sem** ordenar, usa o `quickselect` da própria biblioteca (`src/searching/quickselect.rs`, que entrou junto com este módulo). Da linguagem, usa as listas (`Vec`), texto e impressão, e os **iteradores** (`iter`, `map`, `sum`, `zip`, `fold`...) para percorrer as listas, que é a forma usual de escrever passadas em Rust. Nenhum algoritmo de estatística, ordenação ou seleção vem pronto.
 
 ---
 
@@ -29,7 +29,7 @@ O código foi escrito para ser **lido e estudado**. Cada função tem uma explic
 | Correlação de Pearson | `correlation(x, y)` | `correlation.rs` | a força da relação linear, de −1 a 1 |
 | Resumo completo | `summary(dados)` | `summary.rs` | todas as medidas de uma lista, prontas para imprimir |
 
-O arquivo `helpers.rs` guarda as regras usadas por todos: conferir se a lista é válida e fazer uma cópia ordenada. A cópia é ordenada pelo `merge_sort` da biblioteca, com os valores "embrulhados" num tipo que tem ordem total (o `f64` sozinho não tem, por causa do `NaN`).
+O arquivo `helpers.rs` guarda as regras usadas por todos: conferir se a lista é válida, fazer uma cópia ordenada (com o `merge_sort`) e achar o valor de uma posição da lista ordenada sem ordenar (com o `quickselect`). Nos dois casos, os valores são "embrulhados" num tipo que tem ordem total (o `f64` sozinho não tem, por causa do `NaN`).
 
 ---
 
@@ -92,10 +92,7 @@ Amplitude ............ 7.0000
 
 ```rust
 let inteiros = [2, 4, 4, 5, 7, 9];
-let mut dados: Vec<f64> = Vec::new();
-for &v in &inteiros {
-    dados.push(v as f64);
-}
+let dados: Vec<f64> = inteiros.iter().map(|&v| v as f64).collect();
 ```
 
 ---
@@ -113,7 +110,7 @@ cargo test statistics
 No fim, deve aparecer uma linha como esta (o número de testes pode mudar):
 
 ```text
-test result: ok. 104 passed; 0 failed; 0 ignored; 0 measured; ...
+test result: ok. 115 passed; 0 failed; 0 ignored; 0 measured; ...
 ```
 
 **Ver o módulo funcionando**, com o resumo impresso na tela:
@@ -139,17 +136,26 @@ Se você está começando no Rust, esta tabela explica cada recurso da linguagem
 | `fn` | declara uma função | `fn mean(data: &[f64]) -> Option<f64>` |
 | `&[f64]` | uma lista de números decimais **emprestada**: a função só lê a lista, não pode alterá-la | `data: &[f64]` |
 | `-> Option<f64>` | o tipo da resposta que a função devolve | `fn variance(...) -> Option<f64>` |
-| `Option`, `Some(valor)`, `None` | uma resposta que pode existir (`Some`) ou não existir (`None`) | `Some(sum / data.len() as f64)` |
-| `let` e `let mut` | cria uma variável; com `mut`, ela pode mudar de valor depois | `let mut sum = 0.0;` |
-| `for &value in data { ... }` | repete o bloco para cada valor da lista; o `&` pega o próprio número (uma cópia), e não uma referência a ele | `mean.rs` |
-| `while condição { ... }` | repete o bloco enquanto a condição for verdadeira | `mode.rs` |
-| `sum += value` | o mesmo que `sum = sum + value` | `mean.rs` |
+| `Option`, `Some(valor)`, `None` | uma resposta que pode existir (`Some`) ou não existir (`None`) | `Some(sum / n)` |
+| `let` e `let mut` | cria uma variável; com `mut`, ela pode mudar de valor depois | `let mut lo = 0;` (em `quickselect.rs`) |
+| `data.iter()` | um **iterador**: anda pela lista, entregando um valor de cada vez, sem precisar de índice | `mean.rs` |
+| `\|value\| ...` | uma função curta e sem nome (*closure*): recebe `value` e devolve o que vem depois. `\|&value\|` pega o próprio número, e não uma referência a ele | `variance.rs` |
+| `.map(f)` | transforma cada valor com a função `f` | `.map(\|&value\| value / n)` em `mean.rs` |
+| `.sum()` | soma todos os valores que o iterador entrega | `let sum: f64 = data.iter().sum();` |
+| `.zip(y)` | anda por duas listas ao mesmo tempo, formando os pares (x[0], y[0]), (x[1], y[1]), ... | `covariance.rs` |
+| `.all(f)` | "todos os valores passam no teste `f`?"; para no primeiro que falhar | `helpers.rs` |
+| `.fold(inicio, f)` | começa com `inicio` e vai acumulando: a cada valor, `f` devolve o acumulado novo | `range.rs` |
+| `.collect()` | junta os valores que o iterador entrega numa lista nova (`Vec`) | `helpers.rs` |
+| `.chunk_by(f)` | corta uma lista em pedaços de vizinhos que passam no teste `f` (aqui: vizinhos iguais) | `mode.rs` |
+| `.clamp(a, b)` | traz o número de volta para o intervalo de `a` a `b`, se ele tiver saído | `mean.rs`, `correlation.rs` |
+| `while condição { ... }` | repete o bloco enquanto a condição for verdadeira | `quickselect.rs` |
+| `count += 1` | o mesmo que `count = count + 1` | `quickselect.rs` |
 | `?` | "se a resposta for `None`, pare aqui e devolva `None` também" | `let average = mean(data)?;` |
 | `match` | escolhe um caminho conforme o valor: `Some(v) => ...` ou `None => ...` | `summary.rs` |
 | `as f64`, `as usize` | converte um número de um tipo para outro (inteiro ↔ decimal) | `data.len() as f64` |
 | `data.len()` | a quantidade de elementos da lista | `variance.rs` |
-| `data[0]` e `&data[1..]` | o primeiro elemento; a lista do segundo elemento em diante | `range.rs` |
-| `Vec<f64>`, `Vec::new()`, `.push(x)` | uma lista que pode crescer; criar uma lista vazia; acrescentar `x` no fim | `mode.rs` |
+| `data[0]` e `&data[k + 1..]` | o primeiro elemento; a lista da posição `k + 1` em diante | `range.rs`, `helpers.rs` |
+| `Vec<f64>` | uma lista que pode crescer | `helpers.rs` |
 | `pub`, `pub(super)` ou nada | quem pode usar: qualquer parte do projeto; só a pasta `statistics`; só o próprio arquivo | `helpers.rs` |
 | `mod` e `pub use` | em `mod.rs`: `mod` declara um arquivo do módulo, e `pub use` deixa a função acessível como `statistics::mean` | `mod.rs` |
 | `struct` | uma "ficha": um pacote de valores com nomes | `Quartiles { q1, q2, q3 }` |
@@ -181,6 +187,13 @@ Exemplo, Q3 (p = 0,75) de `[2, 4, 4, 5, 7, 9]`: h = 5 × 0,75 = 3,75, então i =
 
 A mediana (p = 0,5), os quartis, o intervalo interquartílico e o resumo de cinco números usam todos esse mesmo método.
 
+**A fórmula só precisa de dois valores**, os das posições i e i + 1. Por isso `quantile` e `median` não ordenam a lista: o `quickselect` acha o valor da posição i, e o da posição i + 1 é o menor valor que ficou à direita dele. Já quartis, IQR, resumo de cinco números e resumo completo leem os valores de uma lista ordenada uma única vez (veja a seção de complexidade). Os dois caminhos usam a mesma conta e dão **exatamente** o mesmo número (há um teste para isso em `summary.rs`).
+
+**Cuidado nos extremos do `f64`.** Para `[−f64::MAX, f64::MAX]`, a diferença `valor[i + 1] − valor[i]` passa do maior `f64` e vira infinito, e infinito × 0 dá `NaN`. Por isso a conta (função `interpolate`, em `quantile.rs`):
+
+- devolve `valor[i]` direto quando f = 0 (o que inclui p = 0 e p = 1);
+- usa a forma equivalente `(1 − f) × valor[i] + f × valor[i + 1]`, que não calcula a diferença, só quando a diferença estoura.
+
 ---
 
 ## Complexidade dos algoritmos
@@ -208,9 +221,38 @@ São duas medidas:
 
 **Não dá para fazer melhor.** Para calcular a média, é preciso olhar cada número **pelo menos uma vez**. Se um único número ficar de fora, a média pode sair errada. Então qualquer algoritmo precisa de pelo menos n operações, e estas funções já estão no melhor possível: são **Θ(n)**.
 
-### Grupo 2: tempo O(n log n) e espaço O(n). As medidas que precisam da lista em ordem
+### Grupo 2: tempo O(n) e espaço O(n). Quantil e mediana, com o Quickselect
 
-**Quais são:** moda, quantil, mediana, quartis, intervalo interquartílico, resumo de cinco números e resumo completo.
+**Quais são:** quantil e mediana.
+
+**A ideia.** A fórmula do quantil só precisa dos valores das posições i e i + 1 da lista ordenada. Ordenar a lista inteira para olhar dois valores é desperdício. O `quickselect` da biblioteca (`src/searching/quickselect.rs`) acha o valor de uma posição sem ordenar:
+
+1. escolhe um **pivô**;
+2. separa a lista em três partes: menores que o pivô, iguais e maiores;
+3. continua **só na parte onde está a posição procurada**. As outras partes nunca mais são visitadas.
+
+É a mesma separação do Quicksort, com uma diferença decisiva: o Quicksort continua nas **duas** partes, o Quickselect só em **uma**.
+
+**Por que O(n) até no pior caso.** Com um pivô qualquer, o azar (pivô sempre na ponta) leva a O(n²). Para evitar isso, o pivô é a **mediana das medianas**: a lista é dividida em grupos de 5, cada grupo é ordenado pelo `insertion_sort` da biblioteca, e o pivô é a mediana das medianas dos grupos (achada pelo próprio `quickselect`, recursivamente). Esse pivô tem pelo menos 3/10 da lista de cada lado, então cada rodada descarta pelo menos 3/10. O custo segue a recorrência
+
+```text
+T(n) ≤ T(n/5) + T(7n/10) + c·n
+      (pivô)   (o que sobra)  (grupos e separação)
+```
+
+O Teorema Mestre não se aplica direto (são dois subproblemas de tamanhos diferentes), mas a árvore de recursão resolve: como 1/5 + 7/10 = 9/10, o trabalho de cada nível é 90% do nível de cima, e a soma é uma progressão geométrica:
+
+```text
+c·n + 0,9·c·n + 0,81·c·n + ...  ≤  c·n ÷ (1 − 0,9)  =  10·c·n   →   O(n)
+```
+
+Depois do `quickselect`, o vizinho da posição i + 1 é o menor valor à direita (o `min` da biblioteca, mais uma passada de O(n)). No total, **Θ(n)**: não dá para fazer melhor, porque é preciso olhar cada valor pelo menos uma vez.
+
+**Por que O(n) de espaço.** O `quickselect` reorganiza a lista que recebe. Para **não alterar os dados de quem chamou a função**, ele trabalha numa cópia.
+
+### Grupo 3: tempo O(n log n) e espaço O(n). As medidas que leem a lista ordenada
+
+**Quais são:** moda, quartis, intervalo interquartílico, resumo de cinco números e resumo completo.
 
 **Por que O(n log n) de tempo.** O passo caro é **ordenar a cópia da lista**. A ordenação é o `merge_sort` da própria biblioteca: ele divide a lista em duas metades, ordena cada metade (chamando a si mesmo) e junta as duas metades ordenadas numa passada. O custo segue a recorrência
 
@@ -220,7 +262,7 @@ T(n) = 2·T(n/2) + n
 
 que, pelo Teorema Mestre (caso 2: a = 2, b = 2, f(n) = n = n^(log₂ 2)), dá **Θ(n log n)**. Depois de ordenar, o resto é barato:
 
-- o quantil só calcula uma posição e olha dois vizinhos, um trabalho **constante**, O(1);
+- cada quantil só calcula uma posição e olha dois vizinhos, um trabalho **constante**, O(1);
 - a moda percorre a lista ordenada uma vez, contando os blocos de valores iguais: O(n).
 
 Somando: O(n log n) + O(n) = **O(n log n)**. A parcela que cresce mais rápido é a que manda.
@@ -240,26 +282,26 @@ Ao dobrar n, o trabalho de n log n fica **um pouco mais que o dobro**. É pior q
 
 ### Por que o resumo completo ordena uma vez só
 
-Se o `summary` simplesmente chamasse as funções públicas, a lista seria ordenada **4 vezes**: uma em `mode`, uma em `quartiles`, uma em `iqr` e uma em `five_number_summary`. Na notação O, 4 · n log n continua O(n log n), a mesma classe. **Na prática, porém, a parte da ordenação, que é a mais cara, ficaria cerca de 4 vezes mais lenta.** Por isso o `summary` ordena **uma vez** e reaproveita a lista ordenada com as funções internas `quantile_sorted` (O(1) por consulta) e `mode_sorted` (O(n)).
+Se o `summary` simplesmente chamasse as funções públicas, a lista seria ordenada **4 vezes**: uma em `mode`, uma em `quartiles`, uma em `iqr` e uma em `five_number_summary`. Na notação O, 4 · n log n continua O(n log n), a mesma classe. **Na prática, porém, a parte da ordenação, que é a mais cara, ficaria cerca de 4 vezes mais lenta.** Por isso o `summary` ordena **uma vez** e reaproveita a lista ordenada com as funções internas `quantile_sorted` (O(1) por consulta) e `mode_sorted` (O(n)). A moda precisa da lista ordenada de qualquer forma, então, para o resumo, ordenar uma vez sai mais barato que chamar o `quickselect` várias vezes.
 
 **Lição:** a notação O diz **como** o custo cresce. Mas as constantes continuam importando na prática.
 
 ### Existe algo mais rápido?
 
-- **Mediana e quartis:** o algoritmo **Quickselect** acha a mediana em O(n) **em média**, sem ordenar a lista inteira. Aqui preferimos ordenar: é mais simples de explicar e de conferir, e o resumo completo precisa da lista ordenada de qualquer forma.
+- **Quartis, IQR e resumo de cinco números:** poderiam usar o `quickselect` também (três ou cinco seleções de O(n) continuam O(n)). Eles leem a lista ordenada para manter o mesmo caminho do `summary`; é um próximo passo possível.
 - **Moda:** com uma tabela hash, daria para contar as frequências em O(n) em média. Mas, no Rust, um `f64` não pode ser usado diretamente como chave de tabela hash (por causa do `NaN` e do 0,0 / −0,0).
 
 ### Tabela-resumo
 
 | Medida | Tempo | Espaço extra | De onde vem o custo |
 |---|---|---|---|
-| Média | O(n) | O(1) | conferência dos dados + 1 passada somando |
+| Média | O(n) | O(1) | conferência dos dados + 1 passada somando (+3 passadas só se a soma estourar) |
 | Variância e desvio padrão | O(n) | O(1) | conferência + média + passada dos desvios |
 | Coeficiente de variação | O(n) | O(1) | média + desvio padrão |
 | Amplitude | O(n) | O(1) | conferência + 1 passada guardando o mínimo e o máximo |
 | Covariância | O(n) | O(1) | conferência + duas médias + passada dos produtos dos desvios |
-| Correlação | O(n) | O(1) | covariância + dois desvios padrão + conferência de lista constante |
+| Correlação | O(n) | O(1) | conferência + médias + maior valor absoluto + 3 passadas de somas |
+| Quantil e mediana | O(n) | O(n) | cópia + `quickselect` (O(n) no pior caso) + 1 passada pelo vizinho |
 | Moda | O(n log n) | O(n) | ordenação da cópia + 1 passada contando blocos |
-| Quantil e mediana | O(n log n) | O(n) | ordenação da cópia + O(1) para achar a posição |
 | Quartis, IQR e resumo de 5 números | O(n log n) | O(n) | **uma** ordenação + 3 ou 5 consultas de O(1) |
 | Resumo completo | O(n log n) | O(n) | **uma** ordenação + algumas passadas de O(n) |

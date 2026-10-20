@@ -25,6 +25,10 @@ use super::quantile::quantile;
 /// mediana           = (4 + 5) ÷ 2 = 4,5
 /// ```
 ///
+/// Apesar de o exemplo mostrar a lista ordenada, a função **não** ordena a
+/// lista inteira: o `quantile` usa o `quickselect` da biblioteca para achar
+/// só os valores do meio.
+///
 /// # Quando a resposta é `None`
 ///
 /// - Lista vazia.
@@ -32,8 +36,8 @@ use super::quantile::quantile;
 ///
 /// # Complexidade
 ///
-/// - Tempo: O(n log n), o custo de ordenar a cópia.
-/// - Espaço: O(n), o tamanho da cópia ordenada.
+/// - Tempo: **O(n)**, o custo do `quantile` (quickselect, O(n) no pior caso).
+/// - Espaço: O(n), o tamanho da cópia (a lista original não muda).
 pub fn median(data: &[f64]) -> Option<f64> {
     // A mediana é o quantil 0,5.
     quantile(data, 0.5)
@@ -93,5 +97,23 @@ mod tests {
     #[test]
     fn test_with_nan() {
         assert_eq!(median(&[1.0, f64::NAN, 3.0]), None);
+    }
+
+    #[test]
+    fn test_huge_values() {
+        // (f64::MAX + f64::MAX) ÷ 2 estouraria; a mediana certa é f64::MAX.
+        assert_eq!(median(&[f64::MAX, f64::MAX]), Some(f64::MAX));
+        // Entre −f64::MAX e f64::MAX, o meio é 0.
+        assert_close(median(&[f64::MAX, -f64::MAX]), 0.0);
+    }
+
+    #[test]
+    fn test_long_list_with_repeats() {
+        // 1001 valores: os dígitos de 0 a 9, repetidos e fora de ordem.
+        // O 0 aparece 101 vezes (posições 0 a 100 da lista ordenada) e cada
+        // outro dígito 100 vezes; o 4 ocupa as posições 401 a 500. O meio é a
+        // posição 500, então a mediana é 4.
+        let data: Vec<f64> = (0..1001).map(|i| ((i * 7) % 10) as f64).collect();
+        assert_close(median(&data), 4.0);
     }
 }

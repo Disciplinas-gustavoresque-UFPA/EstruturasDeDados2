@@ -55,12 +55,14 @@ pub fn covariance(x: &[f64], y: &[f64]) -> Option<f64> {
     let mean_x = mean(x)?;
     let mean_y = mean(y)?;
 
-    // Passo 3 (2ª passada): somar os produtos dos desvios, par a par:
-    // (x[0], y[0]), (x[1], y[1]), ... É o Σ da fórmula, com i indo de 0 a n − 1.
-    let mut sum_of_products = 0.0;
-    for i in 0..x.len() {
-        sum_of_products += (x[i] - mean_x) * (y[i] - mean_y);
-    }
+    // Passo 3 (2ª passada): somar os produtos dos desvios, par a par.
+    // `zip` anda pelas duas listas ao mesmo tempo, formando os pares
+    // (x[0], y[0]), (x[1], y[1]), ... É o Σ da fórmula.
+    let sum_of_products: f64 = x
+        .iter()
+        .zip(y)
+        .map(|(&a, &b)| (a - mean_x) * (b - mean_y))
+        .sum();
 
     // Passo 4: dividir por n − 1.
     Some(sum_of_products / (x.len() - 1) as f64)
@@ -89,10 +91,7 @@ mod tests {
     #[test]
     fn test_opposite_direction_is_negative() {
         // cov(x, −x) = −(variância de x) = −37/6
-        let mut minus_x: Vec<f64> = Vec::new();
-        for &value in &X {
-            minus_x.push(-value);
-        }
+        let minus_x: Vec<f64> = X.iter().map(|&value| -value).collect();
         assert_close(covariance(&X, &minus_x), -37.0 / 6.0);
     }
 

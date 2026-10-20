@@ -6,10 +6,14 @@
 //! - conferir se uma lista pode ser usada nos cálculos;
 //! - fazer uma cópia ordenada da lista, usando o `merge_sort` da própria
 //!   biblioteca (`src/sorting/merge_sort.rs`);
+//! - achar um valor pela posição que ele teria na lista ordenada, **sem**
+//!   ordenar, usando o `quickselect` da própria biblioteca
+//!   (`src/searching/quickselect.rs`);
 //! - (só nos testes) comparar dois números decimais com tolerância.
 
 use std::cmp::Ordering;
 
+use crate::searching::{min, quickselect};
 use crate::sorting::merge_sort;
 
 /// Confere se a lista pode ser usada nos cálculos.
@@ -25,29 +29,17 @@ use crate::sorting::merge_sort;
 /// - Tempo: O(n). Olha cada valor uma vez.
 /// - Espaço: O(1). Não guarda nada além da resposta.
 pub(super) fn is_valid(data: &[f64]) -> bool {
-    // Passo 1: lista vazia não é válida.
-    if data.is_empty() {
-        return false;
-    }
-
-    // Passo 2: olhar cada valor; se algum for NaN ou infinito, a lista não é
-    // válida.
-    for &value in data {
-        if !value.is_finite() {
-            return false;
-        }
-    }
-
-    // Passo 3: passou por todos os valores sem problema.
-    true
+    // A lista não pode estar vazia, e todos (`all`) os valores precisam ser
+    // finitos. O `all` para no primeiro valor que falhar.
+    !data.is_empty() && data.iter().all(|value| value.is_finite())
 }
 
-/// Um número decimal "embrulhado", para poder ser ordenado pelo `merge_sort`
-/// da biblioteca.
+/// Um número decimal "embrulhado", para poder ser usado pelo `merge_sort`, pelo
+/// `quickselect` e pelo `min` da biblioteca.
 ///
 /// # Por que o embrulho é necessário
 ///
-/// O `merge_sort` deste repositório (em `src/sorting/merge_sort.rs`) ordena
+/// Essas funções da biblioteca (em `src/sorting` e `src/searching`) aceitam
 /// qualquer tipo que possa ser copiado (`Copy`) e que tenha uma **ordem
 /// total** (`Ord`): para quaisquer dois valores a e b, ou a < b, ou a > b, ou
 /// a = b. O `f64` pode ser copiado, mas não tem a ordem total, por causa do
@@ -119,20 +111,57 @@ impl Ord for Sortable {
 /// - Espaço: O(n), o tamanho das cópias.
 pub(super) fn sorted_copy(data: &[f64]) -> Vec<f64> {
     // Passo 1: copiar a lista, embrulhando cada valor.
-    let mut wrapped: Vec<Sortable> = Vec::new();
-    for &value in data {
-        wrapped.push(Sortable(value));
-    }
+    let mut wrapped = wrapped_copy(data);
 
     // Passo 2: ordenar a cópia com o merge_sort da biblioteca.
     merge_sort(&mut wrapped);
 
     // Passo 3: desembrulhar, já em ordem crescente.
-    let mut sorted: Vec<f64> = Vec::new();
-    for item in &wrapped {
-        sorted.push(item.0);
-    }
-    sorted
+    wrapped.iter().map(|item| item.0).collect()
+}
+
+/// Devolve os valores das posições `k` e `k + 1` que a lista teria **se
+/// fosse ordenada**, sem ordenar a lista inteira.
+///
+/// Se `k` é a última posição, não existe vizinho à direita, e o segundo valor
+/// devolvido é o próprio valor da posição `k`.
+///
+/// A lista original não é alterada. Quem chama deve passar uma lista já
+/// conferida por `is_valid` e um `k` menor que o tamanho dela.
+///
+/// # Como funciona
+///
+/// 1. O `quickselect` da biblioteca coloca na posição `k` o valor certo e
+///    deixa à direita dele só valores maiores ou iguais.
+/// 2. O valor da posição `k + 1` é, então, o **menor** valor dessa parte da
+///    direita, achado pelo `min` da biblioteca.
+///
+/// # Complexidade
+///
+/// - Tempo: O(n). Embrulhar (O(n)) + `quickselect` (O(n) no pior caso) +
+///   `min` (O(n)).
+/// - Espaço: O(n), o tamanho da cópia.
+pub(super) fn select_with_next(data: &[f64], k: usize) -> (f64, f64) {
+    // Passo 1: copiar a lista, embrulhando cada valor.
+    let mut wrapped = wrapped_copy(data);
+
+    // Passo 2: o valor da posição k, como se a lista estivesse ordenada.
+    let at_k = quickselect(&mut wrapped, k)
+        .expect("k é uma posição da lista")
+        .0;
+
+    // Passo 3: o vizinho da direita é o menor valor depois da posição k.
+    let next = match min(&wrapped[k + 1..]) {
+        Some(item) => item.0,
+        None => at_k,
+    };
+
+    (at_k, next)
+}
+
+/// Copia a lista, embrulhando cada valor em `Sortable`.
+fn wrapped_copy(data: &[f64]) -> Vec<Sortable> {
+    data.iter().map(|&value| Sortable(value)).collect()
 }
 
 /// (Só nos testes.) Confere se `obtained` está perto de `expected`.
@@ -157,7 +186,25 @@ pub(super) fn assert_close(obtained: Option<f64>, expected: f64) {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_valid, sorted_copy};
+    use super::{is_valid, select_with_next, sorted_copy};
+
+    #[test]
+    fn test_select_with_next_agrees_with_sorted_copy() {
+        // Para cada posição k, o quickselect tem que achar os mesmos valores
+        // que a lista ordenada pelo merge_sort mostra nas posições k e k + 1.
+        let data = [3.5, -2.25, 0.0, 3.5, 10.0, -7.75, 0.1, 3.5, -2.25];
+        let sorted = sorted_copy(&data);
+        for k in 0..data.len() {
+            let next = if k + 1 < data.len() {
+                sorted[k + 1]
+            } else {
+                sorted[k]
+            };
+            assert_eq!(select_with_next(&data, k), (sorted[k], next));
+        }
+        // A lista original não muda.
+        assert_eq!(data, [3.5, -2.25, 0.0, 3.5, 10.0, -7.75, 0.1, 3.5, -2.25]);
+    }
 
     #[test]
     fn test_is_valid() {

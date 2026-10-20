@@ -166,16 +166,10 @@ impl fmt::Display for Summary {
 /// valor. Exemplo: `Média ................ 5.1667`
 fn line(label: &str, value: &str) -> String {
     // Passo 1: contar as letras do nome (acentos contam como uma letra só).
-    let mut letters = 0;
-    for _ in label.chars() {
-        letters += 1;
-    }
+    let letters = label.chars().count();
 
     // Passo 2: completar com pontinhos até a coluna 21.
-    let mut dots = String::new();
-    for _ in letters..21 {
-        dots.push('.');
-    }
+    let dots = ".".repeat(21_usize.saturating_sub(letters));
 
     format!("{label} {dots} {value}")
 }
@@ -199,18 +193,9 @@ fn mode_text(mode: &[f64]) -> String {
         return "nenhuma".to_string();
     }
 
-    // Monta "[a, b, c]", colocando ", " entre um valor e o seguinte.
-    let mut text = String::from("[");
-    let mut first = true;
-    for &value in mode {
-        if !first {
-            text.push_str(", ");
-        }
-        text.push_str(&number(value));
-        first = false;
-    }
-    text.push(']');
-    text
+    // Monta "[a, b, c]": escreve cada valor e junta tudo com ", " no meio.
+    let values: Vec<String> = mode.iter().map(|&value| number(value)).collect();
+    format!("[{}]", values.join(", "))
 }
 
 #[cfg(test)]
@@ -218,7 +203,8 @@ mod tests {
     use super::summary;
     use crate::statistics::helpers::assert_close;
     use crate::statistics::{
-        coefficient_of_variation, five_number_summary, iqr, mean, mode, range, std_dev, variance,
+        coefficient_of_variation, five_number_summary, iqr, mean, median, mode, quantile, range,
+        std_dev, variance,
     };
 
     const X: [f64; 6] = [2.0, 4.0, 4.0, 5.0, 7.0, 9.0];
@@ -262,6 +248,11 @@ mod tests {
         );
         assert_eq!(Some(s.iqr), iqr(&data));
         assert_eq!(Some(s.range), range(&data));
+        // A mediana e os quantis usam o quickselect, e o resumo usa a lista
+        // ordenada: os dois caminhos têm que dar exatamente o mesmo número.
+        assert_eq!(Some(s.median), median(&data));
+        assert_eq!(Some(s.q1), quantile(&data, 0.25));
+        assert_eq!(Some(s.q3), quantile(&data, 0.75));
     }
 
     #[test]

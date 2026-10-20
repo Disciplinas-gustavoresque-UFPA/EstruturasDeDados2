@@ -65,11 +65,14 @@ pub fn variance(data: &[f64]) -> Option<f64> {
     let average = mean(data)?;
 
     // Passo 3 (2ª passada): somar os desvios ao quadrado, (x − média)².
-    let mut sum_of_squares = 0.0;
-    for &value in data {
-        let deviation = value - average;
-        sum_of_squares += deviation * deviation;
-    }
+    // `map` transforma cada valor no seu desvio ao quadrado; `sum` soma tudo.
+    let sum_of_squares: f64 = data
+        .iter()
+        .map(|&value| {
+            let deviation = value - average;
+            deviation * deviation
+        })
+        .sum();
 
     // Passo 4: dividir por n − 1.
     Some(sum_of_squares / (data.len() - 1) as f64)
@@ -126,5 +129,12 @@ mod tests {
     #[test]
     fn test_with_infinity() {
         assert_eq!(variance(&[1.0, f64::INFINITY, 3.0]), None);
+    }
+
+    #[test]
+    fn test_huge_equal_values() {
+        // Antes da correção da média, a média de [1e308, 1e308] dava infinito,
+        // e a variância também. Valores iguais têm variância 0.
+        assert_eq!(variance(&[1e308, 1e308]), Some(0.0));
     }
 }

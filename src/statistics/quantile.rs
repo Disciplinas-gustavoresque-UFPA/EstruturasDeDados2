@@ -1,4 +1,4 @@
-use super::helpers::{is_valid, sorted_copy};
+use super::helpers::{is_valid, select_with_next};
 
 /// Calcula o **quantil p** de uma lista de números.
 ///
@@ -38,6 +38,19 @@ use super::helpers::{is_valid, sorted_copy};
 /// Casos especiais: `p = 0` dá o mínimo, `p = 1` dá o máximo, e uma lista com
 /// um único valor dá o próprio valor.
 ///
+/// # Sem ordenar a lista inteira
+///
+/// A fórmula só precisa de **dois** valores: os das posições i e i + 1 da
+/// lista ordenada. Não é preciso ordenar tudo para achá-los: o `quickselect`
+/// da biblioteca acha o valor da posição i em tempo linear, e o da posição
+/// i + 1 é o menor valor que ficou à direita dele (veja `select_with_next`).
+///
+/// # Valores perto do limite do `f64`
+///
+/// Para `[−f64::MAX, f64::MAX]`, a diferença `valor[i + 1] − valor[i]` passa do
+/// maior `f64` e vira infinito; e infinito × 0 dá `NaN`. Por isso a conta é
+/// feita por `interpolate`, que trata esse caso (veja lá).
+///
 /// # Quando a resposta é `None`
 ///
 /// - Lista vazia.
@@ -46,50 +59,86 @@ use super::helpers::{is_valid, sorted_copy};
 ///
 /// # Complexidade
 ///
-/// - Tempo: O(n log n), o custo de ordenar a cópia. Depois de ordenar, achar
-///   o quantil é uma conta só: O(1).
-/// - Espaço: O(n), o tamanho da cópia ordenada.
+/// - Tempo: **O(n)**. Copiar a lista, o `quickselect` (O(n) no pior caso) e
+///   uma passada para o vizinho da direita. Depois, a conta é O(1).
+/// - Espaço: O(n), o tamanho da cópia (a lista original não muda).
 pub fn quantile(data: &[f64], p: f64) -> Option<f64> {
-    // Passo 1: conferir os dados e conferir se p está entre 0 e 1
-    // (um p igual a NaN também é recusado).
-    if !is_valid(data) || p.is_nan() || p < 0.0 || p > 1.0 {
+    // Passo 1: conferir os dados e conferir se p está no intervalo de 0 a 1,
+    // `0.0..=1.0` (um p igual a NaN não está em intervalo nenhum: é recusado).
+    if !is_valid(data) || !(0.0..=1.0).contains(&p) {
         return None;
     }
 
-    // Passo 2: ordenar uma cópia (a lista original não muda).
-    let sorted = sorted_copy(data);
+    // Passo 2: a posição procurada, separada em parte inteira (i) e decimal (f).
+    let (i, f) = position(data.len(), p);
 
-    // Passo 3: calcular o quantil na lista ordenada.
-    Some(quantile_sorted(&sorted, p))
+    // Passo 3: os valores das posições i e i + 1, sem ordenar a lista.
+    let (low, high) = select_with_next(data, i);
+
+    // Passo 4: andar a fração f do caminho entre os dois.
+    Some(interpolate(low, high, f))
 }
 
 /// Versão interna: calcula o quantil numa lista **já ordenada**.
 ///
 /// Quem chama garante que a lista está ordenada, não está vazia e que `p`
-/// está entre 0 e 1. Assim, quem precisa de vários quantis (como os quartis)
-/// ordena **uma vez só** e chama esta função quantas vezes quiser.
+/// está entre 0 e 1. Assim, quem já precisa da lista ordenada por outro motivo
+/// (como o `summary`, por causa da moda) aproveita a ordenação e chama esta
+/// função quantas vezes quiser.
 ///
 /// # Complexidade
 ///
 /// - Tempo: O(1). É uma conta só, qualquer que seja o tamanho da lista.
 /// - Espaço: O(1).
 pub(super) fn quantile_sorted(sorted: &[f64], p: f64) -> f64 {
-    // Passo 1: a posição procurada, h = (n − 1) × p.
-    let h = (sorted.len() - 1) as f64 * p;
+    // Passo 1: a posição procurada, separada em parte inteira (i) e decimal (f).
+    let (i, f) = position(sorted.len(), p);
 
-    // Passo 2: separar h em parte inteira (i) e parte decimal (f).
-    // Como h nunca é negativo, converter para inteiro (`as usize`) descarta a
-    // parte decimal: é o mesmo que arredondar para baixo.
-    let i = h as usize;
-    let f = h - i as f64;
-
-    // Passo 3: se i é a última posição, não há vizinho à direita.
+    // Passo 2: se i é a última posição, não há vizinho à direita.
     if i + 1 >= sorted.len() {
         return sorted[i];
     }
 
-    // Passo 4: andar a fração f do caminho entre valor[i] e valor[i + 1].
-    sorted[i] + f * (sorted[i + 1] - sorted[i])
+    // Passo 3: andar a fração f do caminho entre valor[i] e valor[i + 1].
+    interpolate(sorted[i], sorted[i + 1], f)
+}
+
+/// A posição procurada, h = (n − 1) × p, separada em parte inteira (i) e
+/// parte decimal (f).
+fn position(n: usize, p: f64) -> (usize, f64) {
+    let h = (n - 1) as f64 * p;
+
+    // Como h nunca é negativo, converter para inteiro (`as usize`) descarta a
+    // parte decimal: é o mesmo que arredondar para baixo.
+    let i = h as usize;
+    (i, h - i as f64)
+}
+
+/// Anda a fração `f` do caminho entre `low` e `high`, com cuidado nos
+/// extremos do `f64`.
+///
+/// ```text
+/// f = 0                       → low, sem conta nenhuma (inclui p = 0 e p = 1)
+/// caso normal                 → low + f × (high − low)
+/// high − low passa do limite  → (1 − f) × low + f × high
+/// ```
+///
+/// As duas fórmulas são iguais na matemática. A segunda não calcula a
+/// diferença `high − low`, que é o que estoura quando os vizinhos têm sinais
+/// opostos e estão perto de ±f64::MAX. Ela só é usada nesse caso, porque a
+/// primeira é a mais precisa (e devolve `low` exato quando `low = high`).
+fn interpolate(low: f64, high: f64, f: f64) -> f64 {
+    // A posição caiu exatamente sobre um valor: não há o que interpolar.
+    if f == 0.0 {
+        return low;
+    }
+
+    let gap = high - low;
+    if gap.is_finite() {
+        low + f * gap
+    } else {
+        (1.0 - f) * low + f * high
+    }
 }
 
 #[cfg(test)]
@@ -158,5 +207,34 @@ mod tests {
     #[test]
     fn test_with_nan() {
         assert_eq!(quantile(&[1.0, f64::NAN, 3.0], 0.5), None);
+    }
+
+    #[test]
+    fn test_extreme_values_do_not_give_nan() {
+        // Revisão do PR (P2): f64::MAX − (−f64::MAX) passa do limite do f64.
+        // Mesmo assim, p = 0 é o mínimo e p = 1 é o máximo, sem NaN.
+        let data = [-f64::MAX, f64::MAX];
+        assert_eq!(quantile(&data, 0.0), Some(-f64::MAX));
+        assert_eq!(quantile(&data, 1.0), Some(f64::MAX));
+        // No meio do caminho entre −f64::MAX e f64::MAX fica o 0.
+        assert_close(quantile(&data, 0.5), 0.0);
+        // E o quantil continua entre os dois vizinhos, sem infinito.
+        let q = quantile(&data, 0.25).unwrap();
+        assert!(q.is_finite() && q < 0.0);
+    }
+
+    #[test]
+    fn test_agrees_with_sorted_version() {
+        // O quantil com quickselect tem que dar exatamente o mesmo que o
+        // quantil calculado na lista ordenada pelo merge_sort.
+        use super::quantile_sorted;
+        use crate::statistics::helpers::sorted_copy;
+
+        let data = [3.5, -2.25, 0.0, 3.5, 10.0, -7.75, 0.1, 3.5, -2.25, 8.0];
+        let sorted = sorted_copy(&data);
+        for step in 0..=20 {
+            let p = step as f64 / 20.0;
+            assert_eq!(quantile(&data, p), Some(quantile_sorted(&sorted, p)));
+        }
     }
 }

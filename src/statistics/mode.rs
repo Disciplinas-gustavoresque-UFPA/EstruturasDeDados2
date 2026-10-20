@@ -69,49 +69,30 @@ pub fn mode(data: &[f64]) -> Option<Vec<f64>> {
 ///   um bloco para cada valor).
 pub(super) fn mode_sorted(sorted: &[f64]) -> Vec<f64> {
     // Passo 1: montar os blocos de valores iguais, guardando
-    // (valor, quantas vezes ele aparece).
-    let mut blocks: Vec<(f64, usize)> = Vec::new();
-    let mut i = 0;
-    while i < sorted.len() {
-        let value = sorted[i];
-        let mut count = 0;
-        // Avança enquanto o valor se repete.
-        while i < sorted.len() && sorted[i] == value {
-            count += 1;
-            i += 1;
-        }
-        blocks.push((value, count));
-    }
+    // (valor, quantas vezes ele aparece). `chunk_by` corta a lista em
+    // pedaços de vizinhos iguais: [2 | 4 4 | 5 | 7 | 9].
+    let blocks: Vec<(f64, usize)> = sorted
+        .chunk_by(|a, b| a == b)
+        .map(|block| (block[0], block.len()))
+        .collect();
 
     // Passo 2: descobrir a maior contagem.
-    let mut highest = 0;
-    for &(_, count) in &blocks {
-        if count > highest {
-            highest = count;
-        }
-    }
+    let highest = blocks.iter().map(|&(_, count)| count).max().unwrap_or(0);
 
     // Passo 3: se há mais de um bloco e todos têm o mesmo tamanho,
     // nenhum valor se destaca → nenhuma moda.
-    let mut all_tied = true;
-    for &(_, count) in &blocks {
-        if count != highest {
-            all_tied = false;
-        }
-    }
+    let all_tied = blocks.iter().all(|&(_, count)| count == highest);
     if blocks.len() > 1 && all_tied {
         return Vec::new();
     }
 
     // Passo 4: a moda são os valores dos blocos com a maior contagem.
     // Eles já saem em ordem crescente, porque a lista estava ordenada.
-    let mut modes: Vec<f64> = Vec::new();
-    for &(value, count) in &blocks {
-        if count == highest {
-            modes.push(value);
-        }
-    }
-    modes
+    blocks
+        .iter()
+        .filter(|(_, count)| *count == highest)
+        .map(|(value, _)| *value)
+        .collect()
 }
 
 #[cfg(test)]
