@@ -64,6 +64,10 @@ impl TripleDes {
 }
 
 #[cfg(test)]
+#[path = "triple_des_tests.rs"]
+mod validation;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
