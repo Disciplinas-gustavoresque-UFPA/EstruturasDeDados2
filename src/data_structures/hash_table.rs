@@ -6,6 +6,7 @@ use std::hash::{Hash, Hasher};
 /// Cada posição (slot) da tabela pode estar vazia ou ocupada por um par chave/valor.
 enum Slot<K, V> {
     Vazio,
+    Removido,
     Ocupado(K, V),
 }
 
@@ -53,22 +54,41 @@ impl<K: Hash + Eq, V> TabelaHash<K, V> {
     pub fn insert(&mut self, chave: K, valor: V) -> Option<V> {
         let cap = self.slots.len();
         let inicio = self.indice_inicial(&chave);
+        let mut primeiro_removido = None;
+        let mut indice_existente = None;
+        let mut indice_insercao = None;
 
         for i in 0..cap {
             let idx = (inicio + i) % cap; // sondagem linear
-            match &mut self.slots[idx] {
+            match &self.slots[idx] {
                 Slot::Vazio => {
-                    self.slots[idx] = Slot::Ocupado(chave, valor);
-                    self.tamanho += 1;
-                    return None;
+                    indice_insercao = Some(primeiro_removido.unwrap_or(idx));
+                    break;
                 }
-                Slot::Ocupado(k, v) if *k == chave => {
-                    return Some(std::mem::replace(v, valor));
+                Slot::Removido => {
+                    primeiro_removido.get_or_insert(idx);
+                }
+                Slot::Ocupado(k, _) if k == &chave => {
+                    indice_existente = Some(idx);
+                    break;
                 }
                 Slot::Ocupado(..) => {} // colisão: tenta a próxima posição
             }
         }
-      
+
+        if let Some(idx) = indice_existente {
+            if let Slot::Ocupado(_, valor_atual) = &mut self.slots[idx] {
+                return Some(std::mem::replace(valor_atual, valor));
+            }
+            unreachable!();
+        }
+
+        if let Some(idx) = indice_insercao.or(primeiro_removido) {
+            self.slots[idx] = Slot::Ocupado(chave, valor);
+            self.tamanho += 1;
+            return None;
+        }
+
         panic!("tabela cheia");
     }
 
@@ -82,13 +102,34 @@ impl<K: Hash + Eq, V> TabelaHash<K, V> {
             match &self.slots[idx] {
                 Slot::Vazio => return None, // achou buraco: a chave não existe
                 Slot::Ocupado(k, v) if k == chave => return Some(v),
-                Slot::Ocupado(..) => {}
+                Slot::Removido | Slot::Ocupado(..) => {}
             }
         }
         None
     }
 
-   
+    pub fn remove(&mut self, chave: &K) -> Option<V> {
+        let cap = self.slots.len();
+        let inicio = self.indice_inicial(chave);
+
+        for i in 0..cap {
+            let idx = (inicio + i) % cap;
+            match &self.slots[idx] {
+                Slot::Vazio => return None,
+                Slot::Ocupado(k, _) if k == chave => {
+                    let valor = match std::mem::replace(&mut self.slots[idx], Slot::Removido) {
+                        Slot::Ocupado(_, valor) => valor,
+                        _ => unreachable!(),
+                    };
+                    self.tamanho -= 1;
+                    return Some(valor);
+                }
+                Slot::Removido | Slot::Ocupado(..) => {}
+            }
+        }
+        None
+    }
+
     pub fn contains_key(&self, chave: &K) -> bool {
         self.get(chave).is_some()
     }
@@ -135,5 +176,31 @@ mod testes {
         for i in 0..8 {
             assert_eq!(t.get(&i), Some(&(i * 10)));
         }
+    }
+
+    #[test]
+    fn remove_chave_preserva_colisoes_e_reutiliza_slot() {
+        let mut t = TabelaHash::com_capacidade(8);
+        let primeiro = 0;
+        let colisoes: Vec<_> = (1..)
+            .filter(|chave| t.indice_inicial(chave) == t.indice_inicial(&primeiro))
+            .take(2)
+            .collect();
+        let segundo = colisoes[0];
+        let terceiro = colisoes[1];
+
+        t.insert(primeiro, "primeiro");
+        t.insert(segundo, "segundo");
+
+        assert_eq!(t.remove(&primeiro), Some("primeiro"));
+        assert_eq!(t.remove(&primeiro), None);
+        assert_eq!(t.get(&primeiro), None);
+        assert_eq!(t.get(&segundo), Some(&"segundo"));
+        assert_eq!(t.len(), 1);
+
+        assert_eq!(t.insert(terceiro, "terceiro"), None);
+        assert_eq!(t.get(&segundo), Some(&"segundo"));
+        assert_eq!(t.get(&terceiro), Some(&"terceiro"));
+        assert_eq!(t.len(), 2);
     }
 }
