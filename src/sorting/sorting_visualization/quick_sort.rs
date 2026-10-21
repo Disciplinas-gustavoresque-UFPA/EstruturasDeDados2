@@ -1,44 +1,39 @@
+
 pub fn quick_sort<T: Ord>(elements: &mut [T]) {
     if elements.len() <= 1 {
         return;
     }
 
-    let pivot_index = partition(elements);
+    let pivot_index = partition(elements, 0, elements.len() - 1);
 
-    let (left, right) = elements.split_at_mut(pivot_index + 1);
+    if pivot_index > 0 {
+        quick_sort(&mut elements[..pivot_index]);
+    }
 
-    quick_sort(left);
-    quick_sort(right);
+    if pivot_index + 1 < elements.len() {
+        quick_sort(&mut elements[pivot_index + 1..]);
+    }
 }
 
-fn partition<T: Ord>(elements: &mut [T]) -> usize {
-    let mut left = 0;
-    let mut right = elements.len() - 1;
-    let pivot_index = elements.len() / 2;
+// Particionamento de Lomuto: utiliza o último elemento
+// do intervalo como pivô.
+fn partition<T: Ord>(
+    elements: &mut [T],
+    low: usize,
+    high: usize,
+) -> usize {
+    let mut pivot_position = low;
 
-    loop {
-        while elements[left] < elements[pivot_index] {
-            left += 1;
+    for current in low..high {
+        if elements[current] <= elements[high] {
+            elements.swap(pivot_position, current);
+            pivot_position += 1;
         }
-
-        while elements[right] > elements[pivot_index] {
-            right -= 1;
-        }
-
-        if left >= right {
-            return right;
-        }
-
-        elements.swap(left, right);
-
-        left += 1;
-
-        if right == 0 {
-            return 0;
-        }
-
-        right -= 1;
     }
+
+    elements.swap(pivot_position, high);
+
+    pivot_position
 }
 
 #[cfg(test)]
@@ -57,6 +52,20 @@ mod tests {
         let mut values = [42];
         quick_sort(&mut values);
         assert_eq!(values, [42]);
+    }
+
+    #[test]
+    fn test_two_sorted_elements() {
+        let mut values = [1, 2];
+        quick_sort(&mut values);
+        assert_eq!(values, [1, 2]);
+    }
+
+    #[test]
+    fn test_two_reverse_sorted_elements() {
+        let mut values = [2, 1];
+        quick_sort(&mut values);
+        assert_eq!(values, [1, 2]);
     }
 
     #[test]
@@ -116,12 +125,34 @@ mod tests {
     }
 }
 
+// Versão instrumentada para a visualização.
+// O vetor completo é mantido em todas as etapas.
 pub(super) fn quick_sort_with_trace(
     elements: &mut [i32],
     steps: &mut Vec<super::SortStep>,
     depth: usize,
 ) -> Result<(), String> {
     if elements.len() <= 1 {
+        return Ok(());
+    }
+
+    quick_sort_range_with_trace(
+        elements,
+        0,
+        elements.len() - 1,
+        steps,
+        depth,
+    )
+}
+
+fn quick_sort_range_with_trace(
+    elements: &mut [i32],
+    low: usize,
+    high: usize,
+    steps: &mut Vec<super::SortStep>,
+    depth: usize,
+) -> Result<(), String> {
+    if low >= high {
         return Ok(());
     }
 
@@ -140,93 +171,89 @@ pub(super) fn quick_sort_with_trace(
         );
     }
 
-    let pivot_index = partition_with_trace(elements, steps)?;
+    let pivot_index =
+        partition_with_trace(elements, low, high, steps);
 
-    let (left, right) = elements.split_at_mut(pivot_index + 1);
+    // Ordena a região à esquerda do pivô.
+    if pivot_index > low {
+        quick_sort_range_with_trace(
+            elements,
+            low,
+            pivot_index - 1,
+            steps,
+            depth + 1,
+        )?;
+    }
 
-    quick_sort_with_trace(left, steps, depth + 1)?;
-    quick_sort_with_trace(right, steps, depth + 1)?;
+    // Ordena a região à direita do pivô.
+    if pivot_index < high {
+        quick_sort_range_with_trace(
+            elements,
+            pivot_index + 1,
+            high,
+            steps,
+            depth + 1,
+        )?;
+    }
 
     Ok(())
 }
 
+// Particionamento de Lomuto com registro das etapas.
+// low e high são índices do vetor completo.
 fn partition_with_trace(
     elements: &mut [i32],
+    low: usize,
+    high: usize,
     steps: &mut Vec<super::SortStep>,
-) -> Result<usize, String> {
-    let mut left = 0;
-    let mut right = elements.len() - 1;
-    let pivot_index = elements.len() / 2;
-    let max_iterations = elements.len().saturating_mul(4).saturating_add(4);
-    let mut iterations = 0;
+) -> usize {
+    let mut pivot_position = low;
 
-    loop {
-        iterations += 1;
+    // Mostra o vetor completo e destaca o pivô.
+    super::record(
+        elements,
+        &[high],
+        &[],
+        "Selecionando o último elemento do intervalo como pivô",
+        steps,
+    );
 
-        if iterations > max_iterations {
+    for current in low..high {
+        // Registra os índices absolutos da comparação.
+        // elements continua sendo o vetor completo.
+        super::record(
+            elements,
+            &[current, high],
+            &[],
+            "Comparando elemento com o pivô",
+            steps,
+        );
+
+        if elements[current] <= elements[high] {
+            elements.swap(pivot_position, current);
+
             super::record(
                 elements,
                 &[],
-                &[],
-                "Particionamento excedeu o limite da demonstração",
+                &[pivot_position, current],
+                "Troca realizada",
                 steps,
             );
 
-            return Err("O particionamento não progrediu como esperado.".to_string());
+            pivot_position += 1;
         }
-
-        while left < elements.len()
-            && elements[left] < elements[pivot_index]
-        {
-            left += 1;
-        }
-
-        if left >= elements.len() {
-            return Err(
-                "O índice esquerdo ultrapassou os limites da lista."
-                    .to_string(),
-            );
-        }
-
-        while elements[right] > elements[pivot_index] {
-            if right == 0 {
-                return Err(
-                    "O índice direito atingiu o limite da lista."
-                        .to_string(),
-                );
-            }
-
-            right -= 1;
-        }
-
-        super::record(
-            elements,
-            &[left, right, pivot_index],
-            &[],
-            "Comparando elementos com o pivô",
-            steps,
-        );
-
-        if left >= right {
-            return Ok(right);
-        }
-
-        elements.swap(left, right);
-
-        super::record(
-            elements,
-            &[pivot_index],
-            &[left, right],
-            "Troca durante o particionamento",
-            steps,
-        );
-
-        left += 1;
-
-        if right == 0 {
-            return Ok(0);
-        }
-
-        right -= 1;
     }
+
+    // Coloca o pivô na posição definitiva.
+    elements.swap(pivot_position, high);
+
+    super::record(
+        elements,
+        &[],
+        &[pivot_position, high],
+        "Pivô colocado em sua posição definitiva",
+        steps,
+    );
+
+    pivot_position
 }

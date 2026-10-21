@@ -1,3 +1,4 @@
+
 pub fn merge_sort<T: Ord + Clone>(elements: &mut [T]) {
     if elements.len() <= 1 {
         return;
@@ -115,6 +116,8 @@ mod tests {
     }
 }
 
+// Versão instrumentada para a visualização.
+// Todas as etapas registram o vetor completo.
 pub(super) fn merge_sort_with_trace(
     elements: &mut [i32],
     steps: &mut Vec<super::SortStep>,
@@ -123,24 +126,66 @@ pub(super) fn merge_sort_with_trace(
         return;
     }
 
-    let middle = elements.len() / 2;
+    merge_sort_range_with_trace(
+        elements,
+        0,
+        elements.len() - 1,
+        steps,
+    );
+}
 
-    merge_sort_with_trace(&mut elements[..middle], steps);
-    merge_sort_with_trace(&mut elements[middle..], steps);
+fn merge_sort_range_with_trace(
+    elements: &mut [i32],
+    low: usize,
+    high: usize,
+    steps: &mut Vec<super::SortStep>,
+) {
+    if low >= high {
+        return;
+    }
 
-    let left = elements[..middle].to_vec();
-    let right = elements[middle..].to_vec();
+    let middle = low + (high - low) / 2;
+
+    merge_sort_range_with_trace(
+        elements,
+        low,
+        middle,
+        steps,
+    );
+
+    merge_sort_range_with_trace(
+        elements,
+        middle + 1,
+        high,
+        steps,
+    );
+
+    merge_with_trace(elements, low, middle, high, steps);
+}
+
+fn merge_with_trace(
+    elements: &mut [i32],
+    low: usize,
+    middle: usize,
+    high: usize,
+    steps: &mut Vec<super::SortStep>,
+) {
+    let left = elements[low..=middle].to_vec();
+    let right = elements[middle + 1..=high].to_vec();
 
     let mut left_index = 0;
     let mut right_index = 0;
-    let mut elements_index = 0;
+    let mut elements_index = low;
 
     while left_index < left.len() && right_index < right.len() {
+        let left_absolute = low + left_index;
+        let right_absolute = middle + 1 + right_index;
+
         super::record(
             elements,
-            &[elements_index],
+            &[left_absolute, right_absolute],
             &[],
-            "Comparando elementos das metades",
+            "Comparando elementos das duas metades",
             steps,
         );
 
@@ -154,9 +199,9 @@ pub(super) fn merge_sort_with_trace(
 
         super::record(
             elements,
+            &[],
             &[elements_index],
-            &[elements_index],
-            "Elemento copiado para a posição atual",
+            "Escrevendo elemento na posição correta",
             steps,
         );
 

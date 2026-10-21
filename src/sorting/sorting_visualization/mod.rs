@@ -15,6 +15,12 @@ pub struct SortStep {
     pub compared: Vec<usize>,
     pub swapped: Vec<usize>,
     pub message: String,
+
+    // Índice absoluto do pivô, quando aplicável.
+    pub pivot: Option<usize>,
+
+    // Intervalo inclusivo [início, fim] que está sendo processado.
+    pub active_range: Option<[usize; 2]>,
 }
 
 #[derive(Serialize)]
@@ -39,6 +45,29 @@ pub(super) fn record(
         compared: compared.to_vec(),
         swapped: swapped.to_vec(),
         message: message.to_string(),
+        pivot: None,
+        active_range: None,
+    });
+}
+
+// Registro específico do Quick Sort.
+// Recebe sempre o vetor completo, nunca apenas um subvetor.
+pub(super) fn record_quick(
+    values: &[i32],
+    compared: &[usize],
+    swapped: &[usize],
+    pivot: Option<usize>,
+    active_range: Option<[usize; 2]>,
+    message: &str,
+    steps: &mut Vec<SortStep>,
+) {
+    steps.push(SortStep {
+        values: values.to_vec(),
+        compared: compared.to_vec(),
+        swapped: swapped.to_vec(),
+        message: message.to_string(),
+        pivot,
+        active_range,
     });
 }
 
