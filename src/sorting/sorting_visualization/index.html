@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Algoritmos de Ordenação</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #10141d;
+            --panel: #191f2c;
+            --border: #30394b;
+            --text: #eef2ff;
+            --muted: #a3aec3;
+            --accent: #7c9cff;
+            --compare: #f5c451;
+            --swap: #ff647c;
+            --bar: #648cff;
+            --success: #62d6a4;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        main {
+            width: min(1100px, 100%);
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: clamp(1.6rem, 4vw, 2.4rem);
+        }
+
+        h2 {
+            margin: 0 0 16px;
+            font-size: 1.1rem;
+        }
+
+        p {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .panel {
+            margin-top: 18px;
+            padding: 20px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            align-items: end;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        select, button, input {
+            font: inherit;
+        }
+
+        select, button {
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+        }
+
+        select {
+            background: #101722;
+            color: var(--text);
+        }
+
+        button {
+            background: #263248;
+            color: var(--text);
+            cursor: pointer;
+            font-weight: 600;
+            transition: filter 0.15s ease;
+        }
+
+        button:hover:not(:disabled) {
+            filter: brightness(1.2);
+        }
+
+        button.primary {
+            background: var(--accent);
+            color: #10141d;
+            border-color: transparent;
+        }
+
+        button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .button-row button {
+            flex: 1 1 120px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .chart-header h2 {
+            margin: 0;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+            border-radius: 3px;
+        }
+
+        .chart-wrap {
+            position: relative;
+            width: 100%;
+            height: 340px;
+            overflow: hidden;
+            border-radius: 10px;
+            background: #111824;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+        }
+
+        .stat {
+            padding: 14px;
+            background: #111824;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .stat-value {
+            margin-top: 5px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        #status {
+            margin: 0;
+            color: var(--text);
+            overflow-wrap: anywhere;
+        }
+
+        #message {
+            min-height: 48px;
+            margin-bottom: 0;
+        }
+
+        .notice {
+            padding: 12px 14px;
+            background: #111824;
+            border-left: 3px solid var(--accent);
+            border-radius: 6px;
+        }
+
+        .error {
+            color: #ff9aa9 !important;
+        }
+
+        .success {
+            color: var(--success) !important;
+        }
+
+        .small {
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 14px;
+            }
+
+            .panel {
+                padding: 15px;
+            }
+
+            .chart-wrap {
+                height: 270px;
+            }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <header>
+        <h1>Algoritmos de Ordenação</h1>
+        <p>
+            Acompanhe a execução dos algoritmos implementados em Rust,
+            observando comparações, trocas e movimentações dos elementos.
+        </p>
+    </header>
+
+    <section class="panel" aria-labelledby="settings-title">
+        <h2 id="settings-title">Configuração</h2>
+
+        <div class="controls">
+            <div>
+                <label for="algorithm">Algoritmo</label>
+                <select id="algorithm">
+                    <option value="bubble">Bubble Sort</option>
+                    <option value="merge">Merge Sort</option>
+                    <option value="quick">Quick Sort</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="arraySize">Quantidade de elementos: <span id="sizeValue">20</span></label>
+                <input id="arraySize" type="range" min="5" max="35" value="20">
+            </div>
+
+            <div>
+                <label for="speed">Velocidade: <span id="speedValue">5</span></label>
+                <input id="speed" type="range" min="1" max="10" value="5">
+            </div>
+
+            <div>
+                <label>Preparação</label>
+                <button id="generateButton" type="button">Gerar nova lista</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel" aria-labelledby="chart-title">
+        <div class="chart-header">
+            <h2 id="chart-title">Visualização da ordenação</h2>
+            <div class="legend">
+                <span class="legend-item"><span class="dot" style="background:var(--bar)"></span>Elemento</span>
+                <span class="legend-item"><span class="dot" style="background:var(--compare)"></span>Comparação</span>
+                <span class="legend-item"><span class="dot" style="background:var(--swap)"></span>Troca ou escrita</span>
+            </div>
+        </div>
+
+        <div class="chart-wrap">
+            <canvas id="chart" aria-label="Barras que representam os elementos da lista"></canvas>
+        </div>
+
+        <div class="button-row" style="margin-top:16px">
+            <button id="startButton" class="primary" type="button" disabled>Iniciar ordenação</button>
+            <button id="pauseButton" type="button" disabled>Pausar</button>
+            <button id="resetButton" type="button" disabled>Reiniciar lista</button>
+        </div>
+    </section>
+
+    <section class="panel" aria-labelledby="stats-title">
+        <h2 id="stats-title">Acompanhamento</h2>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">Etapa atual</div>
+                <div class="stat-value" id="stepCount">0 / 0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Comparações registradas</div>
+                <div class="stat-value" id="comparisonCount">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Trocas/escritas registradas</div>
+                <div class="stat-value" id="operationCount">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Estado</div>
+                <div class="stat-value" id="status">Carregando Rust...</div>
+            </div>
+        </div>
+
+        <p id="message" class="notice" role="status" aria-live="polite">
+            Inicializando o módulo WebAssembly.
+        </p>
+    </section>
+
+    <p class="small">
+        Observação: o Merge Sort realiza cópias de elementos durante a intercalação.
+        Por isso, o destaque de escrita nesse algoritmo não representa uma troca
+        entre duas posições como ocorre no Bubble Sort.
+    </p>
+</main>
+
+<script type="module">
+    import init, { sort_with_trace } from "./pkg/sorting_visualization.js";
+
+    const $ = (id) => document.getElementById(id);
+
+    const canvas = $("chart");
+    const ctx = canvas.getContext("2d");
+
+    const algorithmSelect = $("algorithm");
+    const sizeInput = $("arraySize");
+    const speedInput = $("speed");
+
+    const startButton = $("startButton");
+    const pauseButton = $("pauseButton");
+    const resetButton = $("resetButton");
+    const generateButton = $("generateButton");
+
+    let wasmReady = false;
+    let originalValues = [];
+    let currentValues = [];
+    let trace = [];
+    let stepIndex = 0;
+    let comparisonCount = 0;
+    let operationCount = 0;
+    let animationTimer = null;
+    let running = false;
+    let paused = false;
+    let runToken = 0;
+    let lastCompared = [];
+    let lastSwapped = [];
+
+    function setMessage(message, type = "") {
+        const element = $("message");
+        element.textContent = message;
+        element.className = "notice";
+
+        if (type) {
+            element.classList.add(type);
+        }
+    }
+
+    function setStatus(message) {
+        $("status").textContent = message;
+    }
+
+    function updateCounters() {
+        $("stepCount").textContent = `${Math.min(stepIndex, trace.length)} / ${trace.length}`;
+        $("comparisonCount").textContent = comparisonCount.toLocaleString("pt-BR");
+        $("operationCount").textContent = operationCount.toLocaleString("pt-BR");
+    }
+
+    function updateControls() {
+        startButton.disabled = !wasmReady || running || originalValues.length === 0;
+        pauseButton.disabled = !running;
+        resetButton.disabled = originalValues.length === 0;
+        generateButton.disabled = !wasmReady || running;
+        algorithmSelect.disabled = running;
+        sizeInput.disabled = running;
+    }
+
+    function generateArray() {
+        const size = Number(sizeInput.value);
+
+        originalValues = Array.from(
+            { length: size },
+            () => Math.floor(Math.random() * 96) + 5
+        );
+
+        currentValues = [...originalValues];
+        trace = [];
+        stepIndex = 0;
+        comparisonCount = 0;
+        operationCount = 0;
+        lastCompared = [];
+        lastSwapped = [];
+
+        drawBars(currentValues);
+        updateCounters();
+        setStatus("Pronto");
+        setMessage("Lista criada. Escolha um algoritmo e inicie a ordenação.");
+        updateControls();
+    }
+
+    function resetArray() {
+        stopAnimation();
+        currentValues = [...originalValues];
+        trace = [];
+        stepIndex = 0;
+        comparisonCount = 0;
+        operationCount = 0;
+        lastCompared = [];
+        lastSwapped = [];
+
+        drawBars(currentValues);
+        updateCounters();
+        setStatus("Pronto");
+        setMessage("Lista restaurada ao estado original.");
+        updateControls();
+    }
+
+    function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+
+        canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+        canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        drawBars(currentValues);
+    }
+
+    function drawBars(values, compared = [], swapped = []) {
+        const rect = canvas.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+
+        if (!width || !height) return;
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "#111824";
+        ctx.fillRect(0, 0, width, height);
+
+        if (!values || values.length === 0) return;
+
+        const paddingX = 12;
+        const paddingTop = 22;
+        const paddingBottom = 30;
+        const usableWidth = Math.max(1, width - paddingX * 2);
+        const usableHeight = Math.max(1, height - paddingTop - paddingBottom);
+        const maxValue = Math.max(1, ...values);
+        const slotWidth = usableWidth / values.length;
+        const barWidth = Math.max(1, slotWidth * 0.78);
+
+        values.forEach((value, index) => {
+            const barHeight = (value / maxValue) * usableHeight;
+            const x = paddingX + index * slotWidth + (slotWidth - barWidth) / 2;
+            const y = height - paddingBottom - barHeight;
+
+            let color = "#648cff";
+
+            if (compared.includes(index)) {
+                color = "#f5c451";
+            }
+
+            if (swapped.includes(index)) {
+                color = "#ff647c";
+            }
+
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y, barWidth, barHeight);
+
+            if (values.length <= 24) {
+                ctx.fillStyle = "#eef2ff";
+                ctx.font = "11px system-ui";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "bottom";
+                ctx.fillText(String(value), x + barWidth / 2, Math.max(12, y - 3));
+            }
+
+            if (values.length <= 35) {
+                ctx.fillStyle = "#a3aec3";
+                ctx.font = "10px system-ui";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "top";
+                ctx.fillText(String(index), x + barWidth / 2, height - paddingBottom + 7);
+            }
+        });
+
+        ctx.fillStyle = "#a3aec3";
+        ctx.font = "11px system-ui";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+        ctx.fillText("Índice", paddingX, height - 3);
+    }
+
+    function getDelay() {
+        const speed = Number(speedInput.value);
+        return Math.round(850 / Math.pow(speed, 1.65)) + 8;
+    }
+
+    function stopAnimation() {
+        runToken++;
+
+        if (animationTimer !== null) {
+            clearTimeout(animationTimer);
+            animationTimer = null;
+        }
+
+        running = false;
+        paused = false;
+        pauseButton.textContent = "Pausar";
+        updateControls();
+    }
+
+    function countStep(step) {
+        if (Array.isArray(step.compared) && step.compared.length > 0) {
+            comparisonCount++;
+        }
+
+        if (Array.isArray(step.swapped) && step.swapped.length > 0) {
+            operationCount++;
+        }
+    }
+
+    function displayStep(step) {
+        currentValues = [...step.values];
+        lastCompared = Array.isArray(step.compared) ? step.compared : [];
+        lastSwapped = Array.isArray(step.swapped) ? step.swapped : [];
+
+        drawBars(currentValues, lastCompared, lastSwapped);
+        setMessage(step.message || "Executando algoritmo.");
+    }
+
+    async function startSorting() {
+        if (!wasmReady || running || originalValues.length === 0) return;
+
+        resetArray();
+
+        const selectedAlgorithm = algorithmSelect.value;
+        const token = runToken + 1;
+        runToken = token;
+        running = true;
+        paused = false;
+
+        updateControls();
+        setStatus("Preparando");
+
+        try {
+            setMessage("O Rust está calculando a sequência de etapas...");
+
+            // A ordenação e o registro das etapas são executados em Rust.
+            // O JavaScript apenas recebe os dados e anima a visualização.
+            const result = sort_with_trace(selectedAlgorithm, [...originalValues]);
+
+            if (token !== runToken) return;
+
+            trace = result.steps || [];
+            comparisonCount = 0;
+            operationCount = 0;
+            stepIndex = 0;
+
+            if (trace.length === 0) {
+                throw new Error("O algoritmo não retornou etapas para a visualização.");
+            }
+
+            setStatus("Executando");
+            updateCounters();
+            updateControls();
+
+            function playNextStep() {
+                if (token !== runToken || !running || paused) return;
+
+                if (stepIndex >= trace.length) {
+                    running = false;
+                    animationTimer = null;
+                    currentValues = [...result.sorted];
+                    drawBars(currentValues);
+
+                    if (result.completed) {
+                        setStatus("Concluído");
+                        setMessage("Ordenação concluída com sucesso.", "success");
+                    } else {
+                        setStatus("Interrompido");
+                        setMessage(
+                            result.error || "A demonstração foi interrompida por segurança.",
+                            "error"
+                        );
+                    }
+
+                    updateCounters();
+                    updateControls();
+                    return;
+                }
+
+                const step = trace[stepIndex];
+                displayStep(step);
+                countStep(step);
+                stepIndex++;
+                updateCounters();
+
+                animationTimer = setTimeout(playNextStep, getDelay());
+            }
+
+            playNextStep();
+        } catch (error) {
+            if (token !== runToken) return;
+
+            running = false;
+            animationTimer = null;
+            setStatus("Erro");
+            setMessage(
+                `Não foi possível executar a demonstração: ${error?.message || error}`,
+                "error"
+            );
+            updateControls();
+        }
+    }
+
+    function togglePause() {
+        if (!running) return;
+
+        paused = !paused;
+
+        if (paused) {
+            if (animationTimer !== null) {
+                clearTimeout(animationTimer);
+                animationTimer = null;
+            }
+
+            pauseButton.textContent = "Continuar";
+            setStatus("Pausado");
+            setMessage("Execução pausada. Continue para avançar pelas etapas.");
+        } else {
+            pauseButton.textContent = "Pausar";
+            setStatus("Executando");
+
+            const token = runToken;
+
+            function playNextStep() {
+                if (token !== runToken || !running || paused) return;
+
+                if (stepIndex >= trace.length) {
+                    running = false;
+                    animationTimer = null;
+                    setStatus("Concluído");
+                    updateControls();
+                    return;
+                }
+
+                const step = trace[stepIndex];
+                displayStep(step);
+                countStep(step);
+                stepIndex++;
+                updateCounters();
+
+                animationTimer = setTimeout(playNextStep, getDelay());
+            }
+
+            playNextStep();
+        }
+    }
+
+    sizeInput.addEventListener("input", () => {
+        $("sizeValue").textContent = sizeInput.value;
+    });
+
+    speedInput.addEventListener("input", () => {
+        $("speedValue").textContent = speedInput.value;
+    });
+
+    generateButton.addEventListener("click", generateArray);
+    resetButton.addEventListener("click", resetArray);
+    startButton.addEventListener("click", startSorting);
+    pauseButton.addEventListener("click", togglePause);
+
+    window.addEventListener("resize", resizeCanvas);
+
+    async function initialize() {
+        try {
+            await init();
+            wasmReady = true;
+            generateArray();
+            setStatus("Pronto");
+            setMessage("Módulo Rust/WebAssembly carregado. Pronto para ordenar.", "success");
+        } catch (error) {
+            wasmReady = false;
+            setStatus("Falha ao carregar");
+            setMessage(
+                `Não foi possível carregar o WebAssembly. Verifique os arquivos da pasta pkg e abra a página por um servidor HTTP. Detalhe: ${error?.message || error}`,
+                "error"
+            );
+            updateControls();
+        }
+
+        resizeCanvas();
+    }
+
+    initialize();
+</script>
+</body>
+</html>
