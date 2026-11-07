@@ -6,7 +6,7 @@ Referência de acompanhamento: #6.
 
 ## O que o algoritmo faz e como funciona
 
-O Twofish transforma quatro palavras little-endian de 32 bits por whitening de entrada, 16 rodadas de Feistel e whitening de saída. As funções de rodada combinam permutações q0/q1 dependentes da chave com uma matriz MDS em GF(2⁸), seguida de uma transformação pseudo-Hadamard, adições módulo 2³² e rotações de um bit. A descriptografia desfaz as trocas, rotações e combinações na ordem inversa.
+O Twofish transforma quatro palavras little-endian de 32 bits por whitening de entrada, 16 rodadas de Feistel e whitening de saída. A função h combina as permutações fixas q0/q1 com valores derivados da chave e com uma matriz MDS em GF(2⁸). As funções de rodada usam seus resultados na transformação pseudo-Hadamard, em adições módulo 2³² e em rotações de um bit. A descriptografia desfaz as trocas, rotações e combinações na ordem inversa.
 
 A expansão separa as palavras pares e ímpares da chave para gerar 40 subchaves. Uma matriz Reed–Solomon gera as palavras S, armazenadas em ordem inversa, que parametrizam a função h. A matriz MDS usa o polinômio 0x169 e a matriz RS usa 0x14d. A implementação calcula h diretamente, sem tabelas grandes dependentes da chave.
 
@@ -65,23 +65,22 @@ As 40 subchaves e quatro palavras S reservam 176 bytes, além do contador de pal
 
 ## Testes e validação
 
-As dependências de RustCrypto e `cipher` são exclusivamente de desenvolvimento. A implementação executada pela API foi escrita no projeto e não delega operações a essas bibliotecas.
+`twofish` é a única dependência direta de desenvolvimento. Os traits são importados por `reference_twofish::cipher`; `cipher` permanece como dependência transitiva de `twofish`. A implementação executada pela API foi escrita no projeto e não delega operações a essas bibliotecas.
 
-Os testes verificam vetores publicados em ambas as direções, comparação independente da criptografia e da descriptografia, padrões binários, variação de bits de bloco e chave, todos os comprimentos aceitos, comprimentos inválidos, reutilização e independência das instâncias. A reversibilidade é uma verificação complementar. Amostras geradas usam sequência determinística, sem depender de aleatoriedade externa. DES e 3DES também verificam paridade e chaves fracas ou degeneradas.
+Os testes verificam vetores publicados em ambas as direções, comparação independente da criptografia e da descriptografia, padrões binários, variação de bits de bloco e chave, todos os comprimentos aceitos, comprimentos inválidos, reutilização e independência das instâncias. Os vetores encadeados oficiais `ecb_tbl` também são verificados até I=49, com chaves de 128, 192 e 256 bits. A reversibilidade é uma verificação complementar. Amostras geradas usam sequência determinística, sem depender de aleatoriedade externa.
 
-Validação executada com Rust 1.99.1:
+Comandos para reproduzir a validação:
 
 ```text
-cargo test --all-targets                 # 92 passaram; 0 falhas
-cargo test --release --all-targets       # 92 passaram; 0 falhas
-cargo clippy --all-targets               # nenhum aviso novo
+cargo test --all-targets
+cargo test --release --all-targets
+cargo clippy --all-targets
+cargo fmt --check
 ```
-
-A formatação dos arquivos Rust alterados foi verificada com `rustfmt --edition 2024 --check`. Os quatro avisos de Clippy preexistentes (`needless_return` em César e nas três buscas) foram preservados. Antes das mudanças, os 83 testes existentes passaram.
 
 ## Limitações
 
-Esta é uma implementação didática da primitiva de bloco. Não inclui modos de operação, padding, autenticação, geração de chaves nem apagamento garantido das chaves na memória. Não oferece garantia de resistência a canais laterais. DES e 3DES são algoritmos históricos obsoletos para novas aplicações; os blocos de 64 bits também limitam o uso de Blowfish. Os vetores demonstram conformidade funcional, não certificação criptográfica.
+Esta é uma implementação didática da primitiva de bloco. Não inclui modos de operação, padding, autenticação, geração de chaves nem apagamento garantido das chaves na memória. Não oferece garantia de resistência a canais laterais. Os vetores demonstram conformidade funcional, não certificação criptográfica.
 
 ## Referências
 

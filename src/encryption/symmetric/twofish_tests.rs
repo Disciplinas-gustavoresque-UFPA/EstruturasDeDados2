@@ -1,5 +1,6 @@
 use super::{Twofish, q};
-use cipher::{BlockDecrypt, BlockEncrypt, KeyInit};
+use ::twofish as reference_twofish;
+use reference_twofish::cipher::{BlockDecrypt, BlockEncrypt, KeyInit};
 
 fn hex(text: &str) -> Vec<u8> {
     assert!(text.len().is_multiple_of(2));
@@ -11,7 +12,7 @@ fn hex(text: &str) -> Vec<u8> {
 
 fn compare(key: &[u8], inputs: &[[u8; 16]]) {
     let ours = Twofish::new(key).unwrap();
-    let reference = twofish::Twofish::new_from_slice(key).unwrap();
+    let reference = reference_twofish::Twofish::new_from_slice(key).unwrap();
     for input in inputs {
         let mut block = (*input).into();
         reference.encrypt_block(&mut block);
@@ -115,4 +116,36 @@ fn instancias_e_chaves_expandidas_sao_independentes() {
     let second = Twofish::new(&[0xff; 32]).unwrap();
     assert_ne!(before, second.encrypt_block(&[0; 16]));
     assert_eq!(first.encrypt_block(&[0; 16]), before);
+}
+
+fn assert_ecb_tbl_sequence(key_length: usize, expected: &str) {
+    // Apêndice A.2 do artigo Twofish: a chave usa textos de iterações anteriores.
+    let mut key = vec![0; key_length];
+    let mut plain = [0; 16];
+    for _ in 1..=49 {
+        let cipher = Twofish::new(&key).unwrap();
+        let encrypted = cipher.encrypt_block(&plain);
+        assert_eq!(cipher.decrypt_block(&encrypted), plain);
+        let previous_key = key.clone();
+        key[..16].copy_from_slice(&plain);
+        key[16..].copy_from_slice(&previous_key[..key_length - 16]);
+        plain = encrypted;
+    }
+    let expected: [u8; 16] = hex(expected).try_into().unwrap();
+    assert_eq!(plain, expected);
+}
+
+#[test]
+fn ecb_tbl_128_ate_i49() {
+    assert_ecb_tbl_sequence(16, "5d9d4eeffa9151575524f115815a12e0");
+}
+
+#[test]
+fn ecb_tbl_192_ate_i49() {
+    assert_ecb_tbl_sequence(24, "e75449212beef9f4a390bd860a640941");
+}
+
+#[test]
+fn ecb_tbl_256_ate_i49() {
+    assert_ecb_tbl_sequence(32, "37fe26ff1cf66175f5ddf4c33b97a205");
 }

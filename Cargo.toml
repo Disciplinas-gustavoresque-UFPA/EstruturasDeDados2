@@ -6,5 +6,4 @@ edition = "2024"
 [dependencies]
 
 [dev-dependencies]
-cipher = "0.4.4"
 twofish = "0.7.1"
