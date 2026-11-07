@@ -5,7 +5,6 @@
 //! garantia de tempo constante. Os oito bits de paridade da chave são ignorados;
 //! chaves fracas são aceitas para permitir estudar o algoritmo completo.
 
-#[path = "des_tables.rs"]
 mod tables;
 
 use tables::{EXPANSION, FINAL, INITIAL, PC1, PC2, PERMUTATION, SBOXES, SHIFTS};
@@ -98,47 +97,4 @@ fn feistel(right: u32, subkey: u64) -> u32 {
 }
 
 #[cfg(test)]
-#[path = "des_tests.rs"]
-mod validation;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn exemplo_conhecido_em_ambas_as_direcoes() {
-        let cipher = Des::new(&0x133457799bbcdff1u64.to_be_bytes()).unwrap();
-        let plain = 0x0123456789abcdefu64.to_be_bytes();
-        let encrypted = 0x85e813540f0ab405u64.to_be_bytes();
-        assert_eq!(cipher.encrypt_block(&plain), encrypted);
-        assert_eq!(cipher.decrypt_block(&encrypted), plain);
-    }
-
-    #[test]
-    fn rejeita_chaves_com_comprimento_invalido() {
-        for length in 0..=64 {
-            match Des::new(&vec![0; length]) {
-                Ok(_) => assert_eq!(length, 8),
-                Err(error) => {
-                    assert_ne!(length, 8);
-                    assert_eq!(error, DesKeyError { length });
-                    assert!(error.to_string().contains(&length.to_string()));
-                    let _: &dyn std::error::Error = &error;
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn bits_de_paridade_nao_alteram_a_cifra() {
-        let key = 0x133457799bbcdff1u64.to_be_bytes();
-        let expected = Des::new(&key).unwrap();
-        let block = *b"abcdefgh";
-        for mask in 0..256u16 {
-            let changed = std::array::from_fn::<_, 8, _>(|i| key[i] ^ ((mask >> i) & 1) as u8);
-            let actual = Des::new(&changed).unwrap();
-            assert_eq!(actual.encrypt_block(&block), expected.encrypt_block(&block));
-            assert_eq!(actual.decrypt_block(&block), expected.decrypt_block(&block));
-        }
-    }
-}
+mod tests;

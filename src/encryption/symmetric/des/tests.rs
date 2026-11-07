@@ -1,8 +1,9 @@
 //! Validação independente: exemplos FIPS 81 e vetores do DES, além de RustCrypto.
-use super::Des;
-use cipher::{BlockDecrypt, BlockEncrypt, KeyInit};
+use super::{Des, DesKeyError};
+use ::des as reference_des;
+use reference_des::cipher::{BlockDecrypt, BlockEncrypt, KeyInit};
 
-fn compare(ours: &Des, reference: &des::Des, input: [u8; 8]) {
+fn compare(ours: &Des, reference: &reference_des::Des, input: [u8; 8]) {
     let mut encrypted = input.into();
     reference.encrypt_block(&mut encrypted);
     let expected: [u8; 8] = encrypted.into();
@@ -41,7 +42,7 @@ fn vetores_publicados_incluem_o_exemplo_da_fips81() {
 fn compara_padroes_binarios_e_reutilizacao_da_chave() {
     for key in [[0; 8], [0xff; 8], [0x55; 8], [0xaa; 8], *b"12345678"] {
         let ours = Des::new(&key).unwrap();
-        let reference = des::Des::new_from_slice(&key).unwrap();
+        let reference = reference_des::Des::new_from_slice(&key).unwrap();
         for input in [[0; 8], [0xff; 8], [0x55; 8], [0xaa; 8], *b"abcdefgh"] {
             compare(&ours, &reference, input);
         }
@@ -60,7 +61,7 @@ fn compara_cada_bit_da_chave_e_amostras_deterministicas() {
         key[bit / 8] = 1 << (bit % 8);
         compare(
             &Des::new(&key).unwrap(),
-            &des::Des::new_from_slice(&key).unwrap(),
+            &reference_des::Des::new_from_slice(&key).unwrap(),
             *b"abcdefgh",
         );
     }
@@ -71,7 +72,7 @@ fn compara_cada_bit_da_chave_e_amostras_deterministicas() {
         state = state.wrapping_mul(6364136223846793005).wrapping_add(1);
         compare(
             &Des::new(&key).unwrap(),
-            &des::Des::new_from_slice(&key).unwrap(),
+            &reference_des::Des::new_from_slice(&key).unwrap(),
             state.to_be_bytes(),
         );
     }
@@ -88,7 +89,7 @@ fn chaves_fracas_e_semifracas_preservam_as_propriedades_do_des() {
         let ours = Des::new(&key.to_be_bytes()).unwrap();
         compare(
             &ours,
-            &des::Des::new_from_slice(&key.to_be_bytes()).unwrap(),
+            &reference_des::Des::new_from_slice(&key.to_be_bytes()).unwrap(),
             *b"abcdefgh",
         );
         assert_eq!(
@@ -111,4 +112,41 @@ fn instancias_nao_compartilham_estado() {
     let second = Des::new(b"87654321").unwrap();
     assert_ne!(before, second.encrypt_block(b"abcdefgh"));
     assert_eq!(first.encrypt_block(b"abcdefgh"), before);
+}
+
+#[test]
+fn exemplo_conhecido_em_ambas_as_direcoes() {
+    let cipher = Des::new(&0x133457799bbcdff1u64.to_be_bytes()).unwrap();
+    let plain = 0x0123456789abcdefu64.to_be_bytes();
+    let encrypted = 0x85e813540f0ab405u64.to_be_bytes();
+    assert_eq!(cipher.encrypt_block(&plain), encrypted);
+    assert_eq!(cipher.decrypt_block(&encrypted), plain);
+}
+
+#[test]
+fn rejeita_chaves_com_comprimento_invalido() {
+    for length in 0..=64 {
+        match Des::new(&vec![0; length]) {
+            Ok(_) => assert_eq!(length, 8),
+            Err(error) => {
+                assert_ne!(length, 8);
+                assert_eq!(error, DesKeyError { length });
+                assert!(error.to_string().contains(&length.to_string()));
+                let _: &dyn std::error::Error = &error;
+            }
+        }
+    }
+}
+
+#[test]
+fn bits_de_paridade_nao_alteram_a_cifra() {
+    let key = 0x133457799bbcdff1u64.to_be_bytes();
+    let expected = Des::new(&key).unwrap();
+    let block = *b"abcdefgh";
+    for mask in 0..256u16 {
+        let changed = std::array::from_fn::<_, 8, _>(|i| key[i] ^ ((mask >> i) & 1) as u8);
+        let actual = Des::new(&changed).unwrap();
+        assert_eq!(actual.encrypt_block(&block), expected.encrypt_block(&block));
+        assert_eq!(actual.decrypt_block(&block), expected.decrypt_block(&block));
+    }
 }

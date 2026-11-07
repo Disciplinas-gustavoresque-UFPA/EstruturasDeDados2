@@ -42,9 +42,9 @@ assert_eq!(cipher.decrypt_block(&encrypted), plain);
 | `docs/criptografia/des.md` | Funcionamento, interface, exemplos, complexidade e validação da cifra. |
 | `src/encryption/mod.rs` | Exporta as APIs de criptografia. |
 | `src/encryption/symmetric/caesar.rs` | Cifra de César e seus testes existentes. |
-| `src/encryption/symmetric/des.rs` | Implementação da primitiva, expansão da chave, erro tipado e testes básicos. |
-| `src/encryption/symmetric/des_tables.rs` | Constantes normativas e referência da sua origem. |
-| `src/encryption/symmetric/des_tests.rs` | Vetores publicados e testes diferenciais contra RustCrypto. |
+| `src/encryption/symmetric/des/mod.rs` | API pública, erro tipado, expansão da chave e operações de bloco. |
+| `src/encryption/symmetric/des/tables.rs` | Constantes normativas e referência da sua origem. |
+| `src/encryption/symmetric/des/tests.rs` | Vetores publicados e testes diferenciais contra RustCrypto. |
 | `src/encryption/symmetric/mod.rs` | Organiza as implementações de criptografia simétrica. |
 | `src/encryption/symmetric/xor.rs` | Cifra XOR e seus testes existentes. |
 | `src/main.rs` | Entrada do pacote binário e declaração dos módulos públicos. |
@@ -66,11 +66,11 @@ As 16 subchaves ocupam 128 bytes (armazenadas em `u64`). O espaço auxiliar por 
 
 ## Testes e validação
 
-As dependências de RustCrypto e `cipher` são exclusivamente de desenvolvimento. A implementação executada pela API foi escrita no projeto e não delega operações a essas bibliotecas.
+`des` é a única dependência direta de desenvolvimento. Os traits são importados por `reference_des::cipher`; `cipher` permanece como dependência transitiva de `des`. A implementação executada pela API foi escrita no projeto e não delega operações a essas bibliotecas.
 
-Os testes verificam vetores publicados em ambas as direções, comparação independente da criptografia e da descriptografia, padrões binários, variação de bits de bloco e chave, todos os comprimentos aceitos, comprimentos inválidos, reutilização e independência das instâncias. A reversibilidade é uma verificação complementar. Amostras geradas usam sequência determinística, sem depender de aleatoriedade externa. DES e 3DES também verificam paridade e chaves fracas ou degeneradas.
+Os testes verificam vetores publicados em ambas as direções, comparação independente da criptografia e da descriptografia, padrões binários, variação de bits de bloco e chave, todos os comprimentos aceitos, comprimentos inválidos, reutilização e independência das instâncias. A reversibilidade é uma verificação complementar. Amostras geradas usam sequência determinística, sem depender de aleatoriedade externa. Os testes de DES também verificam paridade e chaves fracas ou semifracas.
 
-Validação executada com Rust 1.99.1:
+Validação anterior aos ajustes de revisão, com Rust 1.99.1:
 
 ```text
 cargo test --all-targets                 # 91 passaram; 0 falhas
@@ -82,7 +82,7 @@ A formatação dos arquivos Rust alterados foi verificada com `rustfmt --edition
 
 ## Limitações
 
-Esta é uma implementação didática da primitiva de bloco. Não inclui modos de operação, padding, autenticação, geração de chaves nem apagamento garantido das chaves na memória. Não oferece garantia de resistência a canais laterais. DES e 3DES são algoritmos históricos obsoletos para novas aplicações; os blocos de 64 bits também limitam o uso de Blowfish. Os vetores demonstram conformidade funcional, não certificação criptográfica.
+Esta é uma implementação didática da primitiva de bloco. Não inclui modos de operação, padding, autenticação, geração de chaves nem apagamento garantido das chaves na memória. Não oferece garantia de resistência a canais laterais. DES está obsoleto para novas aplicações. Os vetores demonstram conformidade funcional, não certificação criptográfica.
 
 ## Referências
 
