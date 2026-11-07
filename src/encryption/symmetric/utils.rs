@@ -1,5 +1,10 @@
+const ALPHABET_SIZE: i32 = 26;
+
 pub fn shift_char(c: char, shift: i32) -> char {
+    if !c.is_ascii_alphabetic() {
+        return c;
+    }
     let base = if c.is_ascii_uppercase() { b'A' } else { b'a' };
-    let offset = (c as i32 - base as i32 + shift).rem_euclid(26) as u8;
+    let offset = (c as i32 - base as i32 + shift).rem_euclid(ALPHABET_SIZE) as u8;
     (base + offset) as char
 }

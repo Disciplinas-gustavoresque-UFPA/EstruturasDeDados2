@@ -45,4 +45,14 @@ mod tests {
     fn test_non_alpha_unchanged() {
         assert_eq!(caesar_cipher("123!@#", 5), "123!@#");
     }
+
+    #[test]
+    fn test_big_key() {
+        assert_eq!(caesar_cipher("bcd", 27), "cde");
+    }
+
+    #[test]
+    fn test_shift_wraps_around_to_the_beginning() {
+        assert_eq!(caesar_cipher("bcd", 26), "bcd");
+    }
 }
