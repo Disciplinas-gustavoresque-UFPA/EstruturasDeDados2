@@ -1,25 +1,21 @@
-use super::shift_char;
+use crate::encryption::symmetric::shift_char;
 
-/// Encrypts when `encrypt` is true and decrypts otherwise, preserving case.
-/// Only ASCII letters in `text` advance the repeating key; other characters
-/// remain unchanged. The key is Unicode-uppercased before retaining ASCII
-/// letters, so characters such as `ß` expand to usable key letters (`SS`).
-///
-/// # Panics
-///
-/// Panics if the uppercased key has no ASCII letters, even for empty text.
+/// Criptografa quando `encrypt` é verdadeiro e descriptografa caso contrário.
+/// Preserva a caixa das letras ASCII e mantém os demais caracteres do texto.
+/// Apenas letras ASCII do texto avançam a chave cíclica. A chave é filtrada
+/// antes da conversão para maiúsculas ASCII: caracteres como `ß` são ignorados,
+/// sem expansão Unicode. Se não restarem letras ASCII na chave, devolve o texto
+/// original, inclusive quando ele está vazio.
 pub fn vigenere_cipher(text: &str, key: &str, encrypt: bool) -> String {
-    let key_shifts: Vec<i32> = key
-        .to_uppercase()
+    let key_bytes: Vec<i32> = key
         .chars()
         .filter(|c| c.is_ascii_alphabetic())
-        .map(|c| c as i32 - b'A' as i32)
+        .map(|c| c.to_ascii_uppercase() as i32 - b'A' as i32)
         .collect();
 
-    assert!(
-        !key_shifts.is_empty(),
-        "The key must not be empty. Non-ASCII characters are not supported and will be ignored."
-    );
+    if key_bytes.is_empty() {
+        return text.to_string();
+    }
 
     let mut index = 0;
 
@@ -28,7 +24,7 @@ pub fn vigenere_cipher(text: &str, key: &str, encrypt: bool) -> String {
             if !c.is_ascii_alphabetic() {
                 return c;
             }
-            let shift = key_shifts[index % key_shifts.len()];
+            let shift = key_bytes[index % key_bytes.len()];
             index += 1;
             shift_char(c, if encrypt { shift } else { -shift })
         })
@@ -37,12 +33,14 @@ pub fn vigenere_cipher(text: &str, key: &str, encrypt: bool) -> String {
 
 #[cfg(test)]
 mod tests {
+    use super::vigenere_cipher;
+
     #[test]
     fn test_vigenere_encrypt_classic_example() {
         let input = "ATTACKATDAWN";
         let key = "LEMON";
 
-        let result = super::vigenere_cipher(input, key, true);
+        let result = vigenere_cipher(input, key, true);
 
         assert_eq!(result, "LXFOPVEFRNHR");
     }
@@ -52,7 +50,7 @@ mod tests {
         let input = "HELLOWORLD";
         let key = "KEY";
 
-        let result = super::vigenere_cipher(input, key, true);
+        let result = vigenere_cipher(input, key, true);
 
         assert_eq!(result, "RIJVSUYVJN");
     }
@@ -62,7 +60,7 @@ mod tests {
         let input = "A";
         let key = "B";
 
-        let result = super::vigenere_cipher(input, key, true);
+        let result = vigenere_cipher(input, key, true);
 
         assert_eq!(result, "B");
     }
@@ -72,7 +70,7 @@ mod tests {
         let input = "ABC";
         let key = "KEYLONG";
 
-        let result = super::vigenere_cipher(input, key, true);
+        let result = vigenere_cipher(input, key, true);
 
         assert_eq!(result, "KFA");
     }
@@ -82,7 +80,7 @@ mod tests {
         let input = "";
         let key = "KEY";
 
-        let result = super::vigenere_cipher(input, key, true);
+        let result = vigenere_cipher(input, key, true);
 
         assert!(result.is_empty());
     }
@@ -92,7 +90,7 @@ mod tests {
         let input = "HELLO WORLD!";
         let key = "KEY";
 
-        let result = super::vigenere_cipher(input, key, true);
+        let result = vigenere_cipher(input, key, true);
 
         assert_eq!(result, "RIJVS UYVJN!");
     }
@@ -102,10 +100,27 @@ mod tests {
         let input = "THEQUICKBROWNFOX";
         let key = "SECRET";
 
-        let encrypted = super::vigenere_cipher(input, key, true);
-        let decrypted = super::vigenere_cipher(&encrypted, key, false);
+        let encrypted = vigenere_cipher(input, key, true);
+        let decrypted = vigenere_cipher(&encrypted, key, false);
 
         assert_eq!(decrypted, input);
+    }
+
+    #[test]
+    fn test_vigenere_ignores_non_ascii_key_letters() {
+        for key in ["ß", "ﬃ", "ſ", "é🙂"] {
+            for encrypt in [true, false] {
+                assert_eq!(vigenere_cipher("Aa, é🙂!", key, encrypt), "Aa, é🙂!");
+            }
+        }
+    }
+
+    #[test]
+    fn test_vigenere_filters_mixed_key_before_normalizing() {
+        let key = "bßcﬃdſ";
+        assert_eq!(vigenere_cipher("AAAAAA", key, true), "BCDBCD");
+        assert_eq!(vigenere_cipher("BCDBCD", key, false), "AAAAAA");
+        assert_eq!(vigenere_cipher("AAAA,AA", key, true), "BCDB,CD");
     }
 
     #[test]
@@ -134,27 +149,19 @@ mod tests {
     }
 
     #[test]
-    fn test_unicode_key_uppercase_expansion() {
-        assert_eq!(super::vigenere_cipher("ABC", "ß", true), "STU");
-        assert_eq!(super::vigenere_cipher("ABC", "ı", true), "IJK");
-        assert_eq!(super::vigenere_cipher("ABC", "éA中", true), "ABC");
-        assert_eq!(super::vigenere_cipher("STU", "ß", false), "ABC");
+    fn test_unicode_key_letters_are_not_expanded() {
+        assert_eq!(vigenere_cipher("ABC", "ß", true), "ABC");
+        assert_eq!(vigenere_cipher("ABC", "ı", true), "ABC");
+        assert_eq!(vigenere_cipher("ABC", "éA中", true), "ABC");
+        assert_eq!(vigenere_cipher("STU", "ß", false), "STU");
     }
 
     #[test]
-    fn test_invalid_keys_panic_even_for_empty_input() {
+    fn test_invalid_keys_preserve_input_including_empty_text() {
         for key in ["", "123!?", "é中🦀"] {
-            for text in ["", "ABC"] {
+            for text in ["", "ABC", "Aa, é中🦀!\0"] {
                 for encrypt in [true, false] {
-                    let panic =
-                        std::panic::catch_unwind(|| super::vigenere_cipher(text, key, encrypt))
-                            .expect_err("a key without ASCII letters after uppercasing must panic");
-                    assert_eq!(
-                        panic.downcast_ref::<&str>().copied(),
-                        Some(
-                            "The key must not be empty. Non-ASCII characters are not supported and will be ignored."
-                        )
-                    );
+                    assert_eq!(vigenere_cipher(text, key, encrypt), text);
                 }
             }
         }
