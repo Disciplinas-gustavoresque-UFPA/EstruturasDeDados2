@@ -2,10 +2,9 @@ use crate::encryption::symmetric::shift_char;
 
 pub fn vigenere_cipher(text: &str, key: &str, encrypt: bool) -> String {
     let key_bytes: Vec<i32> = key
-        .to_uppercase()
         .chars()
         .filter(|c| c.is_ascii_alphabetic())
-        .map(|c| c as i32 - b'A' as i32)
+        .map(|c| c.to_ascii_uppercase() as i32 - b'A' as i32)
         .collect();
 
     if key_bytes.is_empty() {
@@ -99,5 +98,22 @@ mod tests {
         let decrypted = vigenere_cipher(&encrypted, key, false);
 
         assert_eq!(decrypted, input);
+    }
+
+    #[test]
+    fn test_vigenere_ignores_non_ascii_key_letters() {
+        for key in ["ß", "ﬃ", "ſ", "é🙂"] {
+            for encrypt in [true, false] {
+                assert_eq!(vigenere_cipher("Aa, é🙂!", key, encrypt), "Aa, é🙂!");
+            }
+        }
+    }
+
+    #[test]
+    fn test_vigenere_filters_mixed_key_before_normalizing() {
+        let key = "bßcﬃdſ";
+        assert_eq!(vigenere_cipher("AAAAAA", key, true), "BCDBCD");
+        assert_eq!(vigenere_cipher("BCDBCD", key, false), "AAAAAA");
+        assert_eq!(vigenere_cipher("AAAA,AA", key, true), "BCDB,CD");
     }
 }
