@@ -1,11 +1,5 @@
 # 3DES: implementação de blocos em Rust 2024
 
-Closes #20
-
-Referência de acompanhamento: #6.
-
-Este PR depende da entrega de DES (#19): sua branch parte da branch de DES para reutilizar a mesma implementação. O destino continua sendo `main`; enquanto DES não for integrado, seu código também aparece no diff. Nenhum merge foi realizado.
-
 ## O que o algoritmo faz e como funciona
 
 O 3DES aplica três operações DES ao mesmo bloco de 64 bits, na composição EDE: `C = E(K3, D(K2, E(K1, P)))`. A descriptografia inverte a ordem e cada operação: `P = D(K1, E(K2, D(K3, C)))`. As três chaves são expandidas uma única vez e reutilizadas.
@@ -31,36 +25,14 @@ let encrypted = cipher.encrypt_block(&plain);
 assert_eq!(cipher.decrypt_block(&encrypted), plain);
 ```
 
-## Arquivos existentes no projeto e sua utilidade
+## Arquivos do módulo
 
 | Arquivo | Utilidade |
 | --- | --- |
-| `.gitignore` | Ignora arquivos gerados e temporários. |
-| `Cargo.lock` | Fixa as versões das dependências usadas nos testes reproduzíveis. |
-| `Cargo.toml` | Define o pacote, a edição Rust 2024 e as dependências de desenvolvimento. |
-| `LICENSE` | Licença Apache 2.0 do projeto. |
-| `README.md` | Apresentação geral e preparação do ambiente; a seção de estado inicial é histórica. |
-| `docs/criptografia/des.md` | Funcionamento, interface, exemplos, complexidade e validação da cifra. |
-| `docs/criptografia/triple_des.md` | Funcionamento, interface, exemplos, complexidade e validação da cifra. |
-| `src/encryption/mod.rs` | Exporta as APIs de criptografia. |
-| `src/encryption/symmetric/caesar.rs` | Cifra de César e seus testes existentes. |
-| `src/encryption/symmetric/des.rs` | Implementação da primitiva, expansão da chave, erro tipado e testes básicos. |
-| `src/encryption/symmetric/des_tables.rs` | Constantes normativas e referência da sua origem. |
-| `src/encryption/symmetric/des_tests.rs` | Vetores publicados e testes diferenciais contra RustCrypto. |
-| `src/encryption/symmetric/mod.rs` | Organiza as implementações de criptografia simétrica. |
-| `src/encryption/symmetric/triple_des.rs` | Implementação da primitiva, expansão da chave, erro tipado e testes básicos. |
-| `src/encryption/symmetric/triple_des_tests.rs` | Vetores publicados e testes diferenciais contra RustCrypto. |
-| `src/encryption/symmetric/xor.rs` | Cifra XOR e seus testes existentes. |
-| `src/main.rs` | Entrada do pacote binário e declaração dos módulos públicos. |
-| `src/searching/find.rs` | Busca linear e seus testes. |
-| `src/searching/max.rs` | Busca do maior elemento e seus testes. |
-| `src/searching/min.rs` | Busca do menor elemento e seus testes. |
-| `src/searching/mod.rs` | Exporta os algoritmos de busca. |
-| `src/sorting/bubble_sort.rs` | Bubble Sort e seus testes. |
-| `src/sorting/insertion_sort.rs` | Insertion Sort e seus testes. |
-| `src/sorting/merge_sort.rs` | Merge Sort e seus testes. |
-| `src/sorting/mod.rs` | Exporta os algoritmos de ordenação. |
-| `src/sorting/selection_sort.rs` | Selection Sort e seus testes. |
+| `src/encryption/symmetric/triple_des/mod.rs` | API, erro tipado e composição EDE com duas ou três chaves. |
+| `src/encryption/symmetric/triple_des/tests.rs` | Oito testes específicos de 3DES. |
+| `src/encryption/symmetric/des/` | Primitiva DES reutilizada pela composição. |
+| `docs/criptografia/triple_des.md` | Funcionamento, interface e complexidade do 3DES. |
 
 ## Análise de complexidade
 
@@ -70,23 +42,20 @@ As subchaves ocupam 384 bytes. O espaço auxiliar é **O(1)**, incluindo os bloc
 
 ## Testes e validação
 
-As dependências de RustCrypto e `cipher` são exclusivamente de desenvolvimento. A implementação executada pela API foi escrita no projeto e não delega operações a essas bibliotecas.
+A suíte específica de 3DES contém oito testes: exemplo de uso, comprimentos inválidos, vetores do apêndice B da SP 800-67, padrões binários e variação de bits, equivalência entre duas e três chaves, redução a DES com chaves iguais, paridade e amostras determinísticas com instâncias independentes.
 
-Os testes verificam vetores publicados em ambas as direções, comparação independente da criptografia e da descriptografia, padrões binários, variação de bits de bloco e chave, todos os comprimentos aceitos, comprimentos inválidos, reutilização e independência das instâncias. A reversibilidade é uma verificação complementar. Amostras geradas usam sequência determinística, sem depender de aleatoriedade externa. DES e 3DES também verificam paridade e chaves fracas ou degeneradas.
-
-Validação executada com Rust 1.99.1:
+Para executar somente essa suíte:
 
 ```text
-cargo test --all-targets                 # 99 passaram; 0 falhas
-cargo test --release --all-targets       # 99 passaram; 0 falhas
-cargo clippy --all-targets               # nenhum aviso novo
+cargo test encryption::symmetric::triple_des
+cargo test --release encryption::symmetric::triple_des
 ```
 
-A formatação dos arquivos Rust alterados foi verificada com `rustfmt --edition 2024 --check`. Os quatro avisos de Clippy preexistentes (`needless_return` em César e nas três buscas) foram preservados. Antes das mudanças, os 83 testes existentes passaram.
+Os testes diferenciais usam `des` exclusivamente como dependência de desenvolvimento, com imports por `reference_des::cipher`. O total de testes da branch inclui outras suítes e não representa a quantidade de testes de 3DES.
 
 ## Limitações
 
-Esta é uma implementação didática da primitiva de bloco. Não inclui modos de operação, padding, autenticação, geração de chaves nem apagamento garantido das chaves na memória. Não oferece garantia de resistência a canais laterais. DES e 3DES são algoritmos históricos obsoletos para novas aplicações; os blocos de 64 bits também limitam o uso de Blowfish. Os vetores demonstram conformidade funcional, não certificação criptográfica.
+Esta é uma implementação didática da primitiva de bloco. Não inclui modos de operação, padding, autenticação, geração de chaves nem apagamento garantido das chaves na memória. Não oferece garantia de resistência a canais laterais. 3DES está obsoleto para novas aplicações. Os vetores demonstram conformidade funcional, não certificação criptográfica.
 
 ## Referências
 

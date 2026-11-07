@@ -64,32 +64,4 @@ impl TripleDes {
 }
 
 #[cfg(test)]
-#[path = "triple_des_tests.rs"]
-mod validation;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn exemplo_com_tres_chaves() {
-        let cipher = TripleDes::new(b"12345678abcdefgh87654321").unwrap();
-        let plain = *b"mensagem";
-        assert_eq!(cipher.decrypt_block(&cipher.encrypt_block(&plain)), plain);
-    }
-
-    #[test]
-    fn rejeita_comprimentos_invalidos() {
-        for length in 0..=64 {
-            match TripleDes::new(&vec![0; length]) {
-                Ok(_) => assert!(length == 16 || length == 24),
-                Err(error) => {
-                    assert!(length != 16 && length != 24);
-                    assert_eq!(error, TripleDesKeyError { length });
-                    assert!(error.to_string().contains(&length.to_string()));
-                    let _: &dyn std::error::Error = &error;
-                }
-            }
-        }
-    }
-}
+mod tests;
