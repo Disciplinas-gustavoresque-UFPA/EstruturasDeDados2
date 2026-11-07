@@ -6,4 +6,5 @@ edition = "2024"
 [dependencies]
 
 [dev-dependencies]
+twofish = "0.7.1"
 des = "0.8.1"
