@@ -1,5 +1,6 @@
 //! Cipher implementations and shared ASCII alphabet arithmetic.
 
+mod aes;
 mod caesar;
 mod des;
 mod rc4;
@@ -8,6 +9,7 @@ mod utils;
 mod vigenere;
 mod xor;
 
+pub use aes::{Aes, AesKeyError};
 pub use caesar::caesar_cipher;
 pub use des::{Des, DesKeyError};
 pub use rc4::rc4;

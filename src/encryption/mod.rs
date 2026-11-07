@@ -3,5 +3,6 @@
 mod symmetric;
 
 pub use symmetric::{
-    Des, DesKeyError, Twofish, TwofishKeyError, caesar_cipher, rc4, vigenere_cipher, xor_encrypt,
+    Aes, AesKeyError, Des, DesKeyError, Twofish, TwofishKeyError, caesar_cipher, rc4,
+    vigenere_cipher, xor_encrypt,
 };
