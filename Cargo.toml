@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 
 [dev-dependencies]
+twofish = "0.7.1"
 criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
 
 [[bench]]

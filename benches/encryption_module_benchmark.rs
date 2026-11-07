@@ -2,6 +2,8 @@ use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_m
 use std::hint::black_box;
 
 // Reuse the binary's module tree without introducing a library target.
+// A árvore completa é validada no binário; aqui só medimos as cifras abaixo.
+#[allow(dead_code, unused_imports)]
 #[path = "../src/encryption/mod.rs"]
 mod encryption;
 

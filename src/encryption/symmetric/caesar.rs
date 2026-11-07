@@ -80,4 +80,14 @@ mod tests {
         }
         assert_eq!(super::caesar_cipher("aAzZ", i32::MIN), "cCbB");
     }
+
+    #[test]
+    fn test_big_key() {
+        assert_eq!(super::caesar_cipher("bcd", 27), "cde");
+    }
+
+    #[test]
+    fn test_shift_wraps_around_to_the_beginning() {
+        assert_eq!(super::caesar_cipher("bcd", 26), "bcd");
+    }
 }
