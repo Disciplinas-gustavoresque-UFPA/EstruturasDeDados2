@@ -8,6 +8,7 @@ version = "0.1.0"
 dependencies = [
  "blowfish",
  "cipher",
+ "twofish",
 ]
 
 [[package]]
@@ -63,6 +64,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "879f10e63c20629ecabbb64a8010319738c66a5cd0c29b02d63d272b03751d01"
 dependencies = [
  "generic-array",
+]
+
+[[package]]
+name = "twofish"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a78e83a30223c757c3947cd144a31014ff04298d8719ae10d03c31c0448c8013"
+dependencies = [
+ "cipher",
 ]
 
 [[package]]
