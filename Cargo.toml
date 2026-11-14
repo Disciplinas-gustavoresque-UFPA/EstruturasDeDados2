@@ -4,3 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+
+[dev-dependencies]
+des = "0.8.1"
+twofish = "0.7.1"
+criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
+
+[[bench]]
+name = "encryption"
+path = "benches/encryption_module_benchmark.rs"
+harness = false

@@ -1,8 +1,6 @@
+pub mod encryption;
 pub mod pca;
 pub mod searching;
 pub mod sorting;
-pub mod encryption;
 
-fn main() {
-
-}
+fn main() {}
