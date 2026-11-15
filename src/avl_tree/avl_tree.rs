@@ -1,4 +1,13 @@
-use std::{boxed::Box, cmp::{self, Ordering}, mem::replace};
+use std::{
+    boxed::Box, 
+    cmp::{
+        self, 
+        Ordering
+    }, 
+    mem::replace, 
+    unreachable
+};
+
 pub enum AvlTreeErr{
     InvalidInsertion
 }
@@ -106,7 +115,18 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
 
     pub(crate) fn auto_balancing(&mut self){
         match self.get_balance_factor() {
-            -2 if let Some(ref mut left) = self.left => {
+            /* A implementação do match arm junto da expressão if let Some(...)
+             * não é estável e foi removida da implementação.
+             * #51114 <https://github.com/rust-lang/rust/issues/51114>
+             */
+            -2 => {
+                /* Nos dois casos o else vai para unreachable!(), pois 
+                 * para retornar -2 ou 2 é necessário o filho esquerdo/direito
+                 * existir.
+                 */
+                let Some(ref mut left) = self.left else{
+                    unreachable!();
+                };
 
                 if left.get_balance_factor() == 1 {
                     left.rotate_left();
@@ -114,7 +134,10 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
 
                 self.rotate_right();
             },
-            2 if let Some(ref mut right) = self.right => {
+            2 => {
+                let Some(ref mut right) = self.right else {
+                    unreachable!()
+                };
 
                 if  right.get_balance_factor() == -1 {
                     right.rotate_right();
@@ -209,17 +232,10 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
     }
 
     fn get_lower_node(
-        &mut self
+        &self
     ) -> AvlNode<T>{
-        if let Some(mut left) = self.left.take() {
-
-            let lower = left.get_lower_node();
-            
-            if left.value != lower.value {
-                self.left = Some(left);
-            }
-            
-            lower
+        if let Some(ref left) = self.left {
+            left.get_lower_node()
         }
         else {
             self.clone()
@@ -231,6 +247,43 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
         val: T
     ) -> Option<T>{
         if 
+            self.value == val
+        {   
+            if self.left.is_none() || self.right.is_none() {
+                if let Some(left) = self.left.take() {
+                    let _ = replace(self, *left);
+                }
+                else if let Some(right) = self.right.take() {
+                    let _ = replace(self, *right);
+                }
+            }
+            else {
+                let Some(mut right) = self.right.take() else{
+                    unreachable!()
+                };
+
+                let lower = right.get_lower_node();
+                right.remove(lower.value.clone());
+                
+                if 
+                    right.value == lower.value && 
+                    let Some(rright) = right.right.take()
+                {
+                    let _ = replace(&mut right, rright);
+                    self.right = Some(right);
+                }
+                else if right.value != lower.value {
+                    self.right = Some(right);
+                }
+
+                self.value = lower.value;
+            }
+
+            self.auto_balancing();
+
+            Some(val)
+        }
+        else if 
             self.value > val &&
             let Some(mut left) = self.left.take()
         {
@@ -241,8 +294,11 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
             {
                 self.left = Some(left);
             }
+            else if res.is_none() {
+                self.left = Some(left)
+            }
             self.auto_balancing();
-            return res;
+            res
         } 
         else if 
             self.value < val && 
@@ -251,54 +307,18 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
             let res = right.remove(val);
             if 
                 let Some(ref vres) = res &&
-                *vres != self.value
+                *vres != right.value 
             {
                 self.right = Some(right);
             }
-            self.auto_balancing();
-            return res;
-        }
-
-        match (
-            self.left.take(), 
-            self.right.take()
-        ){
-            (
-                Some(left), 
-                Some(mut right)
-            ) => {
-                let lower = right.get_lower_node();
-                
-                let old_root = replace(
-                    self, 
-                    lower
-                );
-
-                self.left = Some(left);
+            else if res.is_none() {
                 self.right = Some(right);
-
-                self.auto_balancing();
-
-                Some(old_root.value)
             }
-            (Some(left), None) => {
-                let old_root = replace(
-                self,
-                *left
-                );
-
-                Some(old_root.value)
-            },
-            (None, Some(right)) => {
-                let old_root = replace(
-                self,
-                *right
-                );
-                Some(old_root.value)
-            },
-            _ => {
-                Some(self.value.clone())
-            }
+            self.auto_balancing();
+            res
+        }
+        else {
+            None
         }
     }
 
@@ -348,6 +368,13 @@ impl<T: Ord + Eq + Clone>  AvlTree<T>{
             {
                 self.root = Some(root);
             }
+            /* Antes desse else if, caso o valor não estivesse na árvore
+             * a condição let Some(...) retornaria false e a sub árvore
+             * seria apagada de forma incorreta.
+             */
+            else if res.is_none() {
+                self.root = Some(root);
+            }
 
             res
         }
@@ -393,7 +420,7 @@ macro_rules! avl_tree {
 
 #[cfg(test)]
 mod avl_tree_tests{
-    use crate::avl_tree::avl_tree::AvlTree;
+    use crate::avl_tree::avl_tree::{AvlTree, AvlTreeErr};
 
     #[test]
     fn test_avl_insertion(){
@@ -415,11 +442,14 @@ mod avl_tree_tests{
 
     }
 
+    /* Remove todos os nós da árvore enquanto checa o balanceamento
+     * a cada remoção.
+     */
     #[test]
-    fn test_avl_remove(){
+    fn test_avl_remove_1(){
         let mut avl_tree = avl_tree!(1,2,3,4,5);
 
-        for val in 5..0{
+        for val in (1..=5).rev(){
             let res = avl_tree.remove(val);
             assert!(
                 res.is_some() &&
@@ -431,4 +461,341 @@ mod avl_tree_tests{
         }
     }
 
+    /* Remove apenas a raiz da árvore para testar se o wrapper da
+     * função "remove" na AvlTree não quebra a implementação da função
+     * "remove" da AvlNode.
+     */
+    #[test]
+    fn test_avl_remove_2(){
+        /* A raiz da árvore é 2 verificada via Debug */
+        let mut avl_tree = avl_tree!(1,2,3,4,5);
+
+        let res = avl_tree.remove(2);
+        assert!(
+            res.is_some() &&
+            !avl_tree.search(2)
+        );
+        for bfactors in avl_tree.get_all_balance_factors() {
+            assert!(bfactors.abs() <= 1);
+        }  
+    }
+
+    /* Verifica se ao remover um valor inexistente a integridade
+     * da árvore se mantém.
+     */
+    #[test]
+    fn test_avl_remove_3(){
+        let mut avl_tree = avl_tree!(1,2,3,4,5);
+
+        let res = avl_tree.remove(10);
+        assert!(
+            res.is_none()
+        );
+        
+        for v in 1..=5 {
+            assert!(
+                avl_tree.search(v)
+            );
+        }
+
+        for bfactors in avl_tree.get_all_balance_factors() {
+            assert!(bfactors.abs() <= 1);
+        }
+    }
+
+    #[test]
+    fn test_empty_tree_operations() {
+        let mut avl_tree: AvlTree<i32> = AvlTree::new();
+
+        assert!(!avl_tree.search(1));
+        assert!(avl_tree.remove(1).is_none());
+        assert!(avl_tree.get_all_balance_factors().is_empty());
+    }
+
+    #[test]
+    fn test_single_element_tree() {
+        let mut avl_tree = AvlTree::new();
+        assert!(avl_tree.insert(42).is_ok());
+
+        assert!(avl_tree.search(42));
+        assert!(!avl_tree.search(0));
+        assert_eq!(avl_tree.get_all_balance_factors(), vec![0]);
+
+        let removed = avl_tree.remove(42);
+        assert_eq!(removed, Some(42));
+        assert!(!avl_tree.search(42));
+        assert!(avl_tree.get_all_balance_factors().is_empty());
+
+        // Garante que é possível reinserir após esvaziar a árvore
+        assert!(avl_tree.insert(100).is_ok());
+        assert!(avl_tree.search(100));
+        assert_eq!(avl_tree.get_all_balance_factors(), vec![0]);
+    }
+
+    #[test]
+    fn test_duplicate_insertion_error() {
+        let mut avl_tree = avl_tree!(10, 5, 15, 3, 7);
+
+        // Duplicata na raiz, em nós internos e em folhas
+        for &dup in &[10, 5, 15, 3, 7] {
+            let res = avl_tree.insert(dup);
+            assert!(matches!(res, Err(AvlTreeErr::InvalidInsertion)));
+        }
+
+        // Quantidade de nós e fatores de balanceamento devem permanecer intactos
+        let bfactors = avl_tree.get_all_balance_factors();
+        assert_eq!(bfactors.len(), 5);
+        for bf in bfactors {
+            assert!(bf.abs() <= 1);
+        }
+    }
+
+    #[test]
+    fn test_rotation_ll_descending_insertion() {
+        // Inserção decrescente força rotações simples à direita (caso LL)
+        let avl_tree = avl_tree!(30, 20, 10);
+
+        for &val in &[10, 20, 30] {
+            assert!(avl_tree.search(val));
+        }
+        let bfactors = avl_tree.get_all_balance_factors();
+        assert_eq!(bfactors.len(), 3);
+        for bf in bfactors {
+            assert!(bf.abs() <= 1);
+        }
+    }
+
+    #[test]
+    fn test_rotation_rr_ascending_insertion() {
+        // Inserção crescente força rotações simples à esquerda (caso RR)
+        let avl_tree = avl_tree!(10, 20, 30);
+
+        for &val in &[10, 20, 30] {
+            assert!(avl_tree.search(val));
+        }
+        let bfactors = avl_tree.get_all_balance_factors();
+        assert_eq!(bfactors.len(), 3);
+        for bf in bfactors {
+            assert!(bf.abs() <= 1);
+        }
+    }
+
+    #[test]
+    fn test_rotation_lr_double_rotation() {
+        // Caso Left-Right (rotação dupla esquerda-direita)
+        let avl_tree = avl_tree!(30, 10, 20);
+
+        for &val in &[10, 20, 30] {
+            assert!(avl_tree.search(val));
+        }
+        let bfactors = avl_tree.get_all_balance_factors();
+        assert_eq!(bfactors.len(), 3);
+        for bf in bfactors {
+            assert!(bf.abs() <= 1);
+        }
+    }
+
+    #[test]
+    fn test_rotation_rl_double_rotation() {
+        // Caso Right-Left (rotação dupla direita-esquerda)
+        let avl_tree = avl_tree!(10, 30, 20);
+
+        for &val in &[10, 20, 30] {
+            assert!(avl_tree.search(val));
+        }
+        let bfactors = avl_tree.get_all_balance_factors();
+        assert_eq!(bfactors.len(), 3);
+        for bf in bfactors {
+            assert!(bf.abs() <= 1);
+        }
+    }
+
+    #[test]
+    fn test_large_ascending_and_descending_insertions() {
+        let mut asc_tree = AvlTree::new();
+        let mut desc_tree = AvlTree::new();
+
+        for i in 1..=50 {
+            assert!(asc_tree.insert(i).is_ok());
+            for bf in asc_tree.get_all_balance_factors() {
+                assert!(bf.abs() <= 1);
+            }
+        }
+
+        for i in (1..=50).rev() {
+            assert!(desc_tree.insert(i).is_ok());
+            for bf in desc_tree.get_all_balance_factors() {
+                assert!(bf.abs() <= 1);
+            }
+        }
+
+        assert_eq!(asc_tree.get_all_balance_factors().len(), 50);
+        assert_eq!(desc_tree.get_all_balance_factors().len(), 50);
+
+        for i in 1..=50 {
+            assert!(asc_tree.search(i));
+            assert!(desc_tree.search(i));
+        }
+    }
+
+    #[test]
+    fn test_search_non_existent_boundaries() {
+        let avl_tree = avl_tree!(10, 20, 30, 40, 50);
+
+        assert!(!avl_tree.search(0));   // Menor que o mínimo
+        assert!(!avl_tree.search(15));  // Intermediário inexistente
+        assert!(!avl_tree.search(25));  // Intermediário inexistente
+        assert!(!avl_tree.search(35));  // Intermediário inexistente
+        assert!(!avl_tree.search(60));  // Maior que o máximo
+    }
+
+    #[test]
+    fn test_remove_leaf_node() {
+        let mut avl_tree = avl_tree!(20, 10, 30);
+
+        assert_eq!(avl_tree.remove(10), Some(10));
+        assert!(!avl_tree.search(10));
+        assert!(avl_tree.search(20));
+        assert!(avl_tree.search(30));
+
+        let bfactors = avl_tree.get_all_balance_factors();
+        assert_eq!(bfactors.len(), 2);
+        for bf in bfactors {
+            assert!(bf.abs() <= 1);
+        }
+    }
+
+    #[test]
+    fn test_remove_node_with_one_child() {
+        // Árvore: 20 na raiz, 10 à esquerda (com filho 5), 30 à direita (com filho 40)
+        let mut avl_tree = avl_tree!(20, 10, 30, 5, 40);
+
+        // Remove nó 10 (possui apenas filho esquerdo 5)
+        assert_eq!(avl_tree.remove(10), Some(10));
+        assert!(!avl_tree.search(10));
+        for &v in &[20, 30, 5, 40] {
+            assert!(avl_tree.search(v));
+        }
+
+        // Remove nó 30 (possui apenas filho direito 40)
+        assert_eq!(avl_tree.remove(30), Some(30));
+        assert!(!avl_tree.search(30));
+        for &v in &[20, 5, 40] {
+            assert!(avl_tree.search(v));
+        }
+
+        let bfactors = avl_tree.get_all_balance_factors();
+        assert_eq!(bfactors.len(), 3);
+        for bf in bfactors {
+            assert!(bf.abs() <= 1);
+        }
+    }
+
+    #[test]
+    fn test_remove_node_with_two_children_deep_successor() {
+        let values = [50, 25, 75, 10, 35, 60, 85, 55, 65];
+        let mut avl_tree = AvlTree::new();
+        for &v in &values {
+            assert!(avl_tree.insert(v).is_ok());
+        }
+
+        // Remove 50 (possui dois filhos; sucessor in-order é 55, mais profundo na subárvore direita)
+        assert_eq!(avl_tree.remove(50), Some(50));
+        assert!(!avl_tree.search(50));
+
+        for &v in &[25, 75, 10, 35, 60, 85, 55, 65] {
+            assert!(avl_tree.search(v));
+        }
+
+        let bfactors = avl_tree.get_all_balance_factors();
+        assert_eq!(bfactors.len(), values.len() - 1);
+        for bf in bfactors {
+            assert!(bf.abs() <= 1);
+        }
+    }
+
+    #[test]
+    fn test_remove_two_children_unbalanced_subtrees() {
+        // Raiz 20 com subárvore esquerda de altura 2 (10 -> 5) e direita de altura 1 (30).
+        // Ao remover 20, o sucessor (30) é removido da direita, desencadeando rotação.
+        let mut avl_tree = avl_tree!(20, 10, 30, 5);
+
+        assert_eq!(avl_tree.remove(20), Some(20));
+        assert!(!avl_tree.search(20));
+
+        // Todos os demais nós (5, 10, 30) devem continuar presentes e acessíveis via busca
+        for &v in &[5, 10, 30] {
+            assert!(avl_tree.search(v));
+        }
+
+        let bfactors = avl_tree.get_all_balance_factors();
+        assert_eq!(bfactors.len(), 3);
+        for bf in bfactors {
+            assert!(bf.abs() <= 1);
+        }
+    }
+
+    #[test]
+    fn test_remove_all_ascending_order() {
+        let mut avl_tree = avl_tree!(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+
+        for val in 1..=10 {
+            assert_eq!(avl_tree.remove(val), Some(val));
+            assert!(!avl_tree.search(val));
+
+            // Verifica que todos os valores restantes ainda estão presentes na árvore
+            for remaining in (val + 1)..=10 {
+                assert!(avl_tree.search(remaining));
+            }
+
+            let bfactors = avl_tree.get_all_balance_factors();
+            assert_eq!(bfactors.len(), (10 - val) as usize);
+            for bf in bfactors {
+                assert!(bf.abs() <= 1);
+            }
+        }
+    }
+
+    #[test]
+    fn test_remove_rebalancing_rotations() {
+        // Árvore que exige rebalanceamento (incluindo quando o irmão tem fator 0) após remoção
+        let mut avl_tree = avl_tree!(10, 5, 20, 15, 25);
+
+        assert_eq!(avl_tree.remove(5), Some(5));
+        assert!(!avl_tree.search(5));
+
+        for &v in &[10, 15, 20, 25] {
+            assert!(avl_tree.search(v));
+        }
+
+        let bfactors = avl_tree.get_all_balance_factors();
+        assert_eq!(bfactors.len(), 4);
+        for bf in bfactors {
+            assert!(bf.abs() <= 1);
+        }
+    }
+
+    #[test]
+    fn test_generic_string_elements() {
+        let mut avl_tree = avl_tree!(
+            String::from("delta"),
+            String::from("alfa"),
+            String::from("arcanjo"),
+            String::from("bravo"),
+            String::from("echo")
+        );
+
+        assert!(avl_tree.search(String::from("arcanjo")));
+        assert!(!avl_tree.search(String::from("asmodeus")));
+
+        assert_eq!(
+            avl_tree.remove(String::from("arcanjo")),
+            Some(String::from("arcanjo"))
+        );
+        assert!(!avl_tree.search(String::from("arcanjo")));
+
+        for bf in avl_tree.get_all_balance_factors() {
+            assert!(bf.abs() <= 1);
+        }
+    }
 }
