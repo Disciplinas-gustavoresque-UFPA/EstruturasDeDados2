@@ -7,8 +7,8 @@ edition = "2024"
 
 [dev-dependencies]
 criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
-twofish = "0.7.1"
 des = "0.8.1"
+twofish = "0.7.1"
 
 [[bench]]
 name = "encryption"
