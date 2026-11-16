@@ -1,7 +1,7 @@
 pub mod searching;
 pub mod sorting;
 pub mod encryption;
-pub mod raddix_tree;
+pub mod radix_tree;
 
 fn main() {
     
