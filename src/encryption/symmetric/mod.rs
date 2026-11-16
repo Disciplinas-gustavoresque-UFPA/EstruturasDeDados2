@@ -1,5 +1,6 @@
 //! Cipher implementations and shared ASCII alphabet arithmetic.
 
+mod aes;
 mod blowfish;
 mod caesar;
 mod des;
@@ -10,6 +11,7 @@ mod utils;
 mod vigenere;
 mod xor;
 
+pub use aes::{Aes, AesKeyError};
 pub use blowfish::{Blowfish, BlowfishKeyError};
 pub use caesar::*;
 pub use des::{Des, DesKeyError};

@@ -11,6 +11,7 @@ des = "0.8.1"
 twofish = "0.7.1"
 cipher = "0.4.4"
 blowfish = "0.9.1"
+aes = "0.8.4"
 
 [[bench]]
 name = "encryption"
