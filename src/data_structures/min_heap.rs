@@ -1,4 +1,5 @@
-/// Juan Carlo Teles Martins
+// Implementação do Min-Heap
+// Autor: Juan Carlo Teles Martins
 
 pub struct MinHeap<T> {
     data: Vec<T>,
@@ -67,6 +68,13 @@ impl<T: Ord> MinHeap<T> {
     }
 }
 
+// Implementação da trait Default adicionada aqui
+impl<T: Ord> Default for MinHeap<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -74,7 +82,7 @@ mod tests {
     #[test]
     fn testa_insercao_e_remocao_min_heap() {
         let mut heap = MinHeap::new();
-        
+
         heap.insert(30);
         heap.insert(10);
         heap.insert(40);
@@ -90,7 +98,7 @@ mod tests {
         assert_eq!(heap.extract_min(), Some(20));
         assert_eq!(heap.extract_min(), Some(30));
         assert_eq!(heap.extract_min(), Some(40));
-        
+
         // O heap deve estar vazio agora
         assert_eq!(heap.extract_min(), None);
     }
@@ -99,7 +107,7 @@ mod tests {
     fn testa_min_heap_visual() {
         let mut heap = MinHeap::new();
         let valores = [30, 10, 40, 5, 20];
-        
+
         println!("\n== TESTE VISUAL DO MIN-HEAP ==");
         for &v in &valores {
             println!("-> Inserindo o valor: {}", v);
@@ -107,11 +115,28 @@ mod tests {
             // Como o teste está no mesmo arquivo, ele tem acesso ao campo privado `data`
             println!("   Estado do vetor (Árvore): {:?}", heap.data);
         }
-        
+
         println!("\n-> Iniciando extração (extract_min)...");
         let extraido = heap.extract_min();
         println!("   Valor removido da raiz: {:?}", extraido);
-        println!("   Estado do vetor após reordenar (heapify_down): {:?}", heap.data);
-        println!("___________________________________\n");
+        println!(
+            "   Estado do vetor após reordenar (heapify_down): {:?}",
+            heap.data
+        );
+        println!("________________________________\n");
+    }
+
+    // Teste do filho direito adicionado aqui
+    #[test]
+    fn testa_heapify_down_filho_direito() {
+        let mut heap = MinHeap::new();
+        // Inserir nesta ordem gera exatamente o vetor interno [1, 4, 2, 5, 6, 3]
+        let valores = [1, 4, 2, 5, 6, 3];
+        for &v in &valores {
+            heap.insert(v);
+        }
+
+        assert_eq!(heap.extract_min(), Some(1));
+        assert_eq!(heap.peek(), Some(&2));
     }
 }
