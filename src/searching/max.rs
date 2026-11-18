@@ -1,5 +1,4 @@
 pub fn max<T: Ord + Copy>(elements: &[T]) -> Option<T> {
-
     let mut max_element: Option<&T> = elements.first();
 
     for elem in elements.iter().skip(1) {
@@ -61,7 +60,7 @@ mod tests {
         let vec = vec![1, 3, 5, 5, 2];
         assert_eq!(max(&vec), Some(5));
     }
-    
+
     #[test]
     fn test_characters() {
         let vec = vec!['a', 'z', 'm', 'b', 'y'];
