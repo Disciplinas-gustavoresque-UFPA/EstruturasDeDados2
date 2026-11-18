@@ -41,10 +41,10 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
         let mut right: i64= 0;
 
         if let Some(ref lnode) = self.left {
-            left = lnode.get_height() as i64;
+            left = lnode.height as i64;
         }
         if let Some(ref rnode) = self.right {
-            right = rnode.get_height() as i64;
+            right = rnode.height as i64;
         }
 
         (right - left) as i8
