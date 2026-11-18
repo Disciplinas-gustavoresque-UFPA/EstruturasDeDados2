@@ -15,6 +15,7 @@ pub enum AvlTreeErr{
 #[derive(Clone, Debug)]
 pub(crate) struct AvlNode<T>{
     value: T,
+    height: usize,
     left: Option<Box<AvlNode<T>>>,
     right: Option<Box<AvlNode<T>>>
 }
@@ -29,6 +30,7 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
     ) -> Self{
         Self {
             value,
+            height: 1,
             left: None,
             right: None
         }
@@ -36,21 +38,21 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
 
     fn get_balance_factor(&self) -> i8{
         let mut left: i64 = 0;
-        let mut right: i64 = 0;
+        let mut right: i64= 0;
 
         if let Some(ref lnode) = self.left {
-            left = lnode.get_height();
+            left = lnode.get_height() as i64;
         }
         if let Some(ref rnode) = self.right {
-            right = rnode.get_height();
+            right = rnode.get_height() as i64;
         }
 
         (right - left) as i8
     }
 
-    fn get_height(&self) -> i64{
-        let mut left: i64 = 0;
-        let mut right: i64 = 0;
+    fn get_height(&self) -> usize{
+        let mut left = 0;
+        let mut right = 0;
 
         if let Some(ref lnode) = self.left {
             left = lnode.get_height();
@@ -85,6 +87,12 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
                 old_root
             )
         );
+
+        self.height = self.get_height();
+        let right = self.right.as_mut().unwrap();
+        let new_height_right = right.get_height();
+        right.height = new_height_right;
+
     }
 
     fn rotate_left(&mut self){
@@ -111,6 +119,12 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
                 old_root
             )
         );
+
+        self.height = self.get_height();
+        let left = self.left.as_mut().unwrap();
+        let new_height_left = left.get_height();
+        left.height = new_height_left;
+
     }
 
     pub(crate) fn auto_balancing(&mut self){
@@ -188,6 +202,9 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
 
         self.auto_balancing();
         
+
+        self.height = self.get_height();
+
         Ok(())
     }
 
@@ -233,12 +250,12 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
 
     fn get_lower_node(
         &self
-    ) -> AvlNode<T>{
+    ) -> T{
         if let Some(ref left) = self.left {
             left.get_lower_node()
         }
         else {
-            self.clone()
+            self.value.clone()
         }
     }
 
@@ -263,23 +280,25 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
                 };
 
                 let lower = right.get_lower_node();
-                right.remove(lower.value.clone());
+                right.remove(lower.clone());
                 
                 if 
-                    right.value == lower.value && 
+                    right.value == lower && 
                     let Some(rright) = right.right.take()
                 {
                     let _ = replace(&mut right, rright);
                     self.right = Some(right);
                 }
-                else if right.value != lower.value {
+                else if right.value != lower {
                     self.right = Some(right);
                 }
 
-                self.value = lower.value;
+                self.value = lower;
             }
 
             self.auto_balancing();
+
+            self.height = self.get_height();
 
             Some(val)
         }
@@ -297,7 +316,11 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
             else if res.is_none() {
                 self.left = Some(left)
             }
+
             self.auto_balancing();
+
+            self.height = self.get_height();
+
             res
         } 
         else if 
@@ -314,7 +337,11 @@ impl<T: Ord + Eq + Clone> AvlNode<T>{
             else if res.is_none() {
                 self.right = Some(right);
             }
+
             self.auto_balancing();
+
+            self.height = self.get_height();
+
             res
         }
         else {
@@ -796,6 +823,100 @@ mod avl_tree_tests{
 
         for bf in avl_tree.get_all_balance_factors() {
             assert!(bf.abs() <= 1);
+        }
+    }
+
+    fn assert_node_heights_consistent<T: Ord + Eq + Clone>(
+        node: &crate::avl_tree::avl_tree::AvlNode<T>,
+    ) -> usize {
+        let left_h = node
+            .left
+            .as_ref()
+            .map_or(0, |l| assert_node_heights_consistent(l));
+        let right_h = node
+            .right
+            .as_ref()
+            .map_or(0, |r| assert_node_heights_consistent(r));
+
+        let expected_height = std::cmp::max(left_h, right_h) + 1;
+        assert_eq!(node.get_height(), expected_height);
+        assert!(
+            (right_h as isize - left_h as isize).abs() <= 1,
+            "Subárvore desbalanceada: altura esq = {}, altura dir = {}",
+            left_h,
+            right_h
+        );
+        assert_eq!(
+            node.height, expected_height,
+            "O campo `height` do nó ({}) diverge da altura real calculada ({})",
+            node.height, expected_height
+        );
+        expected_height
+    }
+
+    #[test]
+    fn test_tree_height_after_insert_and_remove() {
+        let mut avl_tree = AvlTree::new();
+
+        // 1 nó -> altura esperada = 1
+        assert!(avl_tree.insert(1).is_ok());
+        assert_eq!(avl_tree.root.as_ref().unwrap().get_height(), 1);
+
+        // 2 nós -> altura esperada = 2
+        assert!(avl_tree.insert(2).is_ok());
+        assert_eq!(avl_tree.root.as_ref().unwrap().get_height(), 2);
+
+        // 3 nós em sequência crescente (1, 2, 3) -> rotação à esquerda mantém altura = 2
+        assert!(avl_tree.insert(3).is_ok());
+        assert_eq!(avl_tree.root.as_ref().unwrap().get_height(), 2);
+
+        // 4 a 7 nós (1..=7) -> rotações formam árvore completa de altura = 3
+        for val in 4..=7 {
+            assert!(avl_tree.insert(val).is_ok());
+            assert_eq!(avl_tree.root.as_ref().unwrap().get_height(), 3);
+        }
+
+        // 8º nó -> altura deve subir para 4
+        assert!(avl_tree.insert(8).is_ok());
+        assert_eq!(avl_tree.root.as_ref().unwrap().get_height(), 4);
+
+        // Removendo o 8º nó -> altura deve voltar para 3
+        assert_eq!(avl_tree.remove(8), Some(8));
+        assert_eq!(avl_tree.root.as_ref().unwrap().get_height(), 3);
+
+        // Removendo nós até restarem apenas 3 elementos -> altura deve cair para 2
+        for val in [7, 6, 5, 4] {
+            assert_eq!(avl_tree.remove(val), Some(val));
+        }
+        assert_eq!(avl_tree.root.as_ref().unwrap().get_height(), 2);
+
+        // Removendo até restar 1 elemento -> altura deve cair para 1
+        assert_eq!(avl_tree.remove(3), Some(3));
+        assert_eq!(avl_tree.root.as_ref().unwrap().get_height(), 2);
+        assert_eq!(avl_tree.remove(2), Some(2));
+        assert_eq!(avl_tree.root.as_ref().unwrap().get_height(), 1);
+
+        // Removendo o último elemento -> árvore vazia (root = None)
+        assert_eq!(avl_tree.remove(1), Some(1));
+        assert!(avl_tree.root.is_none());
+    }
+
+    #[test]
+    fn test_node_height_field_after_insert_and_remove() {
+        let mut avl_tree = AvlTree::new();
+
+        for val in 1..=15 {
+            assert!(avl_tree.insert(val).is_ok());
+            if let Some(ref root) = avl_tree.root {
+                assert_node_heights_consistent(root);
+            }
+        }
+
+        for val in (1..=15).rev() {
+            assert_eq!(avl_tree.remove(val), Some(val));
+            if let Some(ref root) = avl_tree.root {
+                assert_node_heights_consistent(root);
+            }
         }
     }
 }
