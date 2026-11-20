@@ -226,7 +226,22 @@ mod tests {
                 (4, 5, 3),
             ],
         );
+        let names = ["gateway", "auth", "orders", "db", "cache", "resposta"];
+        println!("Arestas do grafo (origem -> destino, peso):");
+        for (from, edge) in graph.edges() {
+            println!("  {} -> {} ({})", names[from], names[edge.to], edge.weight);
+        }
+
         let result = critical_path(&graph).unwrap();
+        let path = result
+            .path
+            .iter()
+            .map(|&vertex| names[vertex])
+            .collect::<Vec<_>>()
+            .join(" -> ");
+        println!("Caminho máximo: {path}");
+        println!("Custo total: {}", result.cost);
+
         assert_eq!(result.cost, 67);
         assert_eq!(result.path, vec![0, 1, 3, 5]);
         assert_eq!(result.cost, brute_force_longest(&graph));
@@ -243,6 +258,12 @@ mod tests {
         for (from, edge) in graph.edges() {
             assert!(position[from] < position[edge.to]);
         }
+    }
+
+    #[test]
+    fn test_topological_order_returns_expected_order() {
+        let graph = build(4, &[(3, 1, 1), (2, 1, 1), (1, 0, 1)]);
+        assert_eq!(topological_order(&graph).unwrap(), vec![2, 3, 1, 0]);
     }
 
     #[test]
