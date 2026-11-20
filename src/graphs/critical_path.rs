@@ -267,6 +267,34 @@ mod tests {
     }
 
     #[test]
+    fn test_large_dag_with_varied_weights() {
+        use std::time::Instant;
+
+        const VERTEX_COUNT: usize = 10_000;
+        let mut graph = Graph::new(VERTEX_COUNT);
+        let mut expected_cost = 0u64;
+
+        for from in 0..(VERTEX_COUNT - 1) {
+            let weight = ((from * 37) % 101 + 1) as u64;
+            graph
+                .add_edge(from, from + 1, weight)
+                .expect("aresta válida");
+            expected_cost += weight;
+        }
+
+        let start = Instant::now();
+        let result = critical_path(&graph).unwrap();
+        println!(
+            "DAG com {VERTEX_COUNT} vértices e {} arestas: {:?}",
+            VERTEX_COUNT - 1,
+            start.elapsed()
+        );
+
+        assert_eq!(result.cost, expected_cost);
+        assert_eq!(result.path, (0..VERTEX_COUNT).collect::<Vec<_>>());
+    }
+
+    #[test]
     fn test_empty_graph() {
         let result = critical_path(&Graph::new(0)).unwrap();
         assert_eq!(result.cost, 0);
