@@ -1,6 +1,8 @@
 pub struct SegmentTree {
     n: usize,
-    tree: Vec<i64>,
+    // nós em i128 para que somas intermediárias nunca causem overflow;
+    // a conversão para i64 acontece apenas no resultado da query
+    tree: Vec<i128>,
 }
 
 impl SegmentTree {
@@ -8,7 +10,7 @@ impl SegmentTree {
     /// Complexidade: O(n) tempo e espaço.
     pub fn build(arr: &[i64]) -> Self{
         let n = arr.len();
-        let mut tree = vec![0i64; 4 * n];
+        let mut tree = vec![0i128; 4 * n];
         if n > 0{
             Self::build_recursive(&mut tree, arr, 1, 0, n-1);
         }
@@ -16,9 +18,9 @@ impl SegmentTree {
         SegmentTree{n, tree}
     }
 
-    fn build_recursive(tree: &mut Vec<i64>, arr: &[i64], node: usize, start: usize, end: usize){
+    fn build_recursive(tree: &mut Vec<i128>, arr: &[i64], node: usize, start: usize, end: usize){
         if start == end {
-            tree[node] = arr[start];
+            tree[node] = arr[start] as i128;
         } else{
             let mid = (start + end) / 2;
             Self::build_recursive(tree, arr, 2 * node, start, mid);
@@ -29,12 +31,15 @@ impl SegmentTree {
 
     /// Retorna a soma do intervalo [l, r] (inclusivo em ambos os extremos).
     /// Complexidade: O(log n).
+    ///
+    /// Causa panic se os índices forem inválidos ou se a soma não couber em i64.
     pub fn query(&self, l: usize, r: usize) -> i64 {
         assert!(l <= r && r < self.n, "índices fora do intervalo válido");
-        self.query_recursive(1, 0, self.n - 1, l, r)
+        let soma = self.query_recursive(1, 0, self.n - 1, l, r);
+        i64::try_from(soma).expect("a soma do intervalo excede os limites de i64")
     }
 
-    fn query_recursive(&self, node: usize, start: usize, end: usize, l: usize, r: usize) -> i64 {
+    fn query_recursive(&self, node: usize, start: usize, end: usize, l: usize, r: usize) -> i128 {
         if end < l || start > r {
             return 0; // completamente fora
         }
@@ -56,7 +61,7 @@ impl SegmentTree {
 
     fn update_recursive(&mut self, node: usize, start: usize, end: usize, i: usize, val: i64) {
         if start == end {
-            self.tree[node] = val; // folha encontrada
+            self.tree[node] = val as i128; // folha encontrada
         } else {
             let mid = (start + end) / 2;
             if i <= mid {
@@ -173,5 +178,130 @@ mod tests {
                 assert_eq!(st.query(l, r), esperado, "após update, query({l},{r}) falhou");
             }
         }
+    }
+
+    // ── casos de borda e erros ──────────────────────────────────────────────
+
+    #[test]
+    fn build_array_vazio() {
+        let _st = SegmentTree::build(&[]);
+    }
+
+    #[test]
+    #[should_panic(expected = "índices fora do intervalo válido")]
+    fn query_em_array_vazio_causa_panic() {
+        let st = SegmentTree::build(&[]);
+        st.query(0, 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "índices fora do intervalo válido")]
+    fn query_com_l_maior_que_r_causa_panic() {
+        let st = SegmentTree::build(&[1, 2, 3]);
+        st.query(2, 1);
+    }
+
+    #[test]
+    #[should_panic(expected = "índices fora do intervalo válido")]
+    fn query_com_r_fora_do_array_causa_panic() {
+        let st = SegmentTree::build(&[1, 2, 3]);
+        st.query(0, 3);
+    }
+
+    #[test]
+    #[should_panic(expected = "índice fora do intervalo válido")]
+    fn update_com_i_fora_do_array_causa_panic() {
+        let mut st = SegmentTree::build(&[1, 2, 3]);
+        st.update(3, 10);
+    }
+
+    #[test]
+    fn tamanhos_pequenos_todas_as_queries() {
+        // tamanhos 1 a 8 cobrem os casos pequenos que costumam esconder erros de fronteira
+        for n in 1..=8 {
+            let arr: Vec<i64> = (1..=n as i64).map(|x| x * 3 - 7).collect();
+            let st = SegmentTree::build(&arr);
+            for l in 0..n {
+                for r in l..n {
+                    let esperado: i64 = arr[l..=r].iter().sum();
+                    assert_eq!(st.query(l, r), esperado, "n={n}, query({l},{r})");
+                }
+            }
+        }
+    }
+
+    // ── overflow ────────────────────────────────────────────────────────────
+
+    #[test]
+    fn somas_intermediarias_maiores_que_i64_nao_causam_overflow() {
+        // o nó [0, 1] guarda i64::MAX + 1, mas a soma total cabe em i64
+        let st = SegmentTree::build(&[i64::MAX, 1, -1]);
+        assert_eq!(st.query(0, 2), i64::MAX);
+        assert_eq!(st.query(0, 0), i64::MAX);
+    }
+
+    #[test]
+    #[should_panic(expected = "a soma do intervalo excede os limites de i64")]
+    fn soma_maior_que_i64_causa_panic() {
+        let st = SegmentTree::build(&[i64::MAX, 1]);
+        st.query(0, 1);
+    }
+
+    // ── testes aleatórios e de escala ───────────────────────────────────────
+
+    /// Gerador pseudoaleatório simples (xorshift), para não adicionar dependências.
+    struct Xorshift(u64);
+
+    impl Xorshift {
+        fn next(&mut self) -> u64 {
+            self.0 ^= self.0 << 13;
+            self.0 ^= self.0 >> 7;
+            self.0 ^= self.0 << 17;
+            self.0
+        }
+
+        fn intervalo(&mut self, limite: usize) -> usize {
+            (self.next() % limite as u64) as usize
+        }
+
+        fn valor(&mut self) -> i64 {
+            (self.next() % 2001) as i64 - 1000
+        }
+    }
+
+    #[test]
+    fn operacoes_aleatorias_comparadas_com_vec() {
+        // semente fixa: o teste é reproduzível
+        let mut rng = Xorshift(0x2545_F491_4F6C_DD1D);
+        for n in [1, 2, 3, 4, 5, 17, 64, 100] {
+            let mut referencia: Vec<i64> = (0..n).map(|_| rng.valor()).collect();
+            let mut st = SegmentTree::build(&referencia);
+            for _ in 0..2_000 {
+                if rng.next() % 2 == 0 {
+                    let i = rng.intervalo(n);
+                    let val = rng.valor();
+                    st.update(i, val);
+                    referencia[i] = val;
+                } else {
+                    let a = rng.intervalo(n);
+                    let b = rng.intervalo(n);
+                    let (l, r) = (a.min(b), a.max(b));
+                    let esperado: i64 = referencia[l..=r].iter().sum();
+                    assert_eq!(st.query(l, r), esperado, "n={n}, query({l},{r})");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn array_grande() {
+        let n = 1_000_000;
+        let arr: Vec<i64> = (0..n as i64).collect();
+        let mut st = SegmentTree::build(&arr);
+        // soma de 0 até n-1 = n(n-1)/2
+        assert_eq!(st.query(0, n - 1), (n as i64) * (n as i64 - 1) / 2);
+        assert_eq!(st.query(n / 2, n / 2), (n / 2) as i64);
+        st.update(n - 1, 0);
+        assert_eq!(st.query(0, n - 1), (n as i64) * (n as i64 - 1) / 2 - (n as i64 - 1));
     }
 }
