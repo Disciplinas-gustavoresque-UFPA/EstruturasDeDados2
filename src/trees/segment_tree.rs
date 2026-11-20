@@ -304,4 +304,26 @@ mod tests {
         st.update(n - 1, 0);
         assert_eq!(st.query(0, n - 1), (n as i64) * (n as i64 - 1) / 2 - (n as i64 - 1));
     }
+
+    #[test]
+    fn muitas_operacoes_em_array_grande() {
+        // 200.000 updates e 200.000 queries em n ≈ 1 milhão.
+        // Com O(log n) por operação: ~10^7 passos (menos de 1 s).
+        // Com O(n) por operação: ~10^11 passos (horas) — o teste não terminaria.
+        let n = 1 << 20;
+        let mut rng = Xorshift(0x9E37_79B9_7F4A_7C15);
+        let mut st = SegmentTree::build(&vec![1; n]);
+        // referência mantida em O(1) por passo, para não virar uma soma O(n)
+        let mut total: i64 = n as i64;
+        for _ in 0..200_000 {
+            let i = rng.intervalo(n);
+            let antigo = st.query(i, i);
+            st.update(i, 2);
+            total += 2 - antigo;
+            let a = rng.intervalo(n);
+            let b = rng.intervalo(n);
+            st.query(a.min(b), a.max(b));
+        }
+        assert_eq!(st.query(0, n - 1), total);
+    }
 }
