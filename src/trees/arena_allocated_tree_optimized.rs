@@ -1,3 +1,5 @@
+use crate::trees::arena_allocated_tree::NodeId;
+
 pub struct CompactNode<T> {
     pub data: T,
     pub parent: Option<NodeId>,
