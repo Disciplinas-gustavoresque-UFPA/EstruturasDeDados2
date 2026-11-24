@@ -1,7 +1,9 @@
 //! Módulo de Casamento de Padrões em Textos (String Matching).
 
+pub mod kmp;
 pub mod naive;
 
+pub use kmp::search as kmp_search;
 pub use naive::search as naive_search;
 
 #[cfg(test)]
@@ -10,9 +12,21 @@ mod tests {
 
     fn run_test_case(text: &str, pattern: &str, expected: &[usize]) {
         let res_naive = naive_search(text, pattern);
+        let res_kmp = kmp_search(text, pattern);
+
         assert_eq!(
             res_naive, expected,
             "Naive falhou. Texto: '{}', Padrão: '{}'",
+            text, pattern
+        );
+        assert_eq!(
+            res_kmp, expected,
+            "KMP falhou. Texto: '{}', Padrão: '{}'",
+            text, pattern
+        );
+        assert_eq!(
+            res_naive, res_kmp,
+            "Divergência entre Naive e KMP. Texto: '{}', Padrão: '{}'",
             text, pattern
         );
     }
@@ -82,4 +96,3 @@ mod tests {
         run_test_case("AAAAAAAAAAAAAAAAAAAAB", "AAAAAAAAAC", &[]);
     }
 }
-
