@@ -1,2 +1,2 @@
-pub mod patricia_trie;
 pub mod max_heap;
+pub mod patricia_trie;

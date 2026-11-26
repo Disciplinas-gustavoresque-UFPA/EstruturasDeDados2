@@ -4,6 +4,12 @@ pub struct MaxHeap<T> {
     data: Vec<T>,
 }
 
+impl<T: Ord> Default for MaxHeap<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: Ord> MaxHeap<T> {
     pub fn new() -> Self {
         MaxHeap { data: Vec::new() }
@@ -11,11 +17,19 @@ impl<T: Ord> MaxHeap<T> {
 
     // Funções para cálculo de índices da árvore binária em um vetor (0-indexed)
     fn parent(i: usize) -> usize {
-        if i == 0 { 0 } else { (i - 1) / 2 }
+        if i == 0 {
+            0
+        } else {
+            (i - 1) / 2
+        }
     }
 
-    fn left(i: usize) -> usize { 2 * i + 1 }
-    fn right(i: usize) -> usize { 2 * i + 2 }
+    fn left(i: usize) -> usize {
+        2 * i + 1
+    }
+    fn right(i: usize) -> usize {
+        2 * i + 2
+    }
 
     /// Insere um novo elemento no final e corrige a prioridade "subindo" a árvore
     pub fn insert(&mut self, value: T) {
@@ -30,13 +44,17 @@ impl<T: Ord> MaxHeap<T> {
 
     /// Remove e retorna o elemento de maior prioridade, corrigindo a árvore "descendo"
     pub fn extract_max(&mut self) -> Option<T> {
-        if self.data.is_empty() { return None; }
-        if self.data.len() == 1 { return self.data.pop(); }
-        
+        if self.data.is_empty() {
+            return None;
+        }
+        if self.data.len() == 1 {
+            return self.data.pop();
+        }
+
         // O último elemento substitui a raiz, e a raiz antiga é retornada
         let max = self.data.swap_remove(0);
         self.heapify_down(0);
-        
+
         Some(max)
     }
 
@@ -56,11 +74,17 @@ impl<T: Ord> MaxHeap<T> {
             let l = Self::left(i);
             let r = Self::right(i);
 
-            if l < len && self.data[l] > self.data[largest] { largest = l; }
-            if r < len && self.data[r] > self.data[largest] { largest = r; }
-            
-            if largest == i { break; } // Elemento já está na posição correta
-            
+            if l < len && self.data[l] > self.data[largest] {
+                largest = l;
+            }
+            if r < len && self.data[r] > self.data[largest] {
+                largest = r;
+            }
+
+            if largest == i {
+                break;
+            } // Elemento já está na posição correta
+
             self.data.swap(i, largest);
             i = largest;
         }
@@ -74,7 +98,7 @@ mod tests {
     #[test]
     fn testa_insercao_e_remocao_max_heap() {
         let mut heap = MaxHeap::new();
-        
+
         // Inserindo elementos desordenados
         heap.insert(10);
         heap.insert(30);
@@ -91,7 +115,7 @@ mod tests {
         assert_eq!(heap.extract_max(), Some(20));
         assert_eq!(heap.extract_max(), Some(10));
         assert_eq!(heap.extract_max(), Some(5));
-        
+
         // O heap deve estar vazio agora
         assert_eq!(heap.extract_max(), None);
     }
