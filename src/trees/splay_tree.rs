@@ -7,11 +7,11 @@ struct Node<K> {
 
 #[derive(Debug)]
 pub struct SplayTree<K> {
-    pub arena: Vec<Node<K>>,
-    pub root: Option<usize>,
+    arena: Vec<Node<K>>,
+    root: Option<usize>,
 }
 
-impl<K: Ord + Clone> SplayTree<K> {
+impl<K: Ord> SplayTree<K> {
     pub fn new() -> Self {
         Self {
             arena: Vec::new(),
@@ -19,7 +19,7 @@ impl<K: Ord + Clone> SplayTree<K> {
         }
     }
 
-    pub fn new_node(&mut self, key: K) -> usize {
+    fn new_node(&mut self, key: K) -> usize {
         let idx = self.arena.len();
         self.arena.push(Node {
             key,
